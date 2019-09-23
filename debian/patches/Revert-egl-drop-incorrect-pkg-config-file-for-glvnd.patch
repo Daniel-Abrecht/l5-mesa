@@ -1,4 +1,3 @@
-From 8f581f0171039c8f9774674e275b032fcc7b0e95 Mon Sep 17 00:00:00 2001
 From: Timo Aaltonen <tjaalton@debian.org>
 Date: Wed, 21 Aug 2019 07:20:18 +0300
 Subject: [PATCH] Revert "egl: drop incorrect pkg-config file for glvnd"
@@ -9,7 +8,7 @@ This reverts commit 1a25980c469b38d2c6456344fe538ad1bcb47f63.
  1 file changed, 18 insertions(+), 10 deletions(-)
 
 diff --git a/src/egl/meson.build b/src/egl/meson.build
-index 14aca2a2186..2b90c631a4d 100644
+index 14aca2a..2b90c63 100644
 --- a/src/egl/meson.build
 +++ b/src/egl/meson.build
 @@ -173,18 +173,26 @@ libegl = shared_library(
@@ -49,6 +48,3 @@ index 14aca2a2186..2b90c631a4d 100644
  if with_tests and prog_nm.found()
    if with_glvnd
      egl_symbols = files('egl-glvnd-symbols.txt')
--- 
-2.20.1
-
