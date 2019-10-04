@@ -1,3 +1,11 @@
+mesa (19.2.0~rc4-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Enable softpin for gc7000
+  * Disable aarch64 features we don't need atm and that require
+    newer tools.
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 04 Oct 2019 16:54:46 +0200
+
 mesa (19.2.0~rc4-1) experimental; urgency=medium
 
   * New upstream release candidate.
