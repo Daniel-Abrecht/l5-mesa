@@ -1,3 +1,45 @@
+mesa (19.2.4-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #944880)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 18 Nov 2019 15:25:12 +0200
+
+mesa (19.2.3-1) unstable; urgency=medium
+
+  * New upstream release.
+  * create-gles-pc-files-with-old-glvnd.diff: Drop the revert with a
+    proposed patch to fix creating gles pc files with old glvnd.
+  * rules: GLESv2 libs aren't built anymore, drop removing the libs.
+  * mesa-common-dev: Drop mangled GL/GLX headers, they're not generated
+    anymore.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 07 Nov 2019 14:01:26 +0200
+
+mesa (19.2.1-1) unstable; urgency=medium
+
+  [ Timo Aaltonen ]
+  * New upstream release.
+  * rules: Build Vulkan overlay on x32. (Closes: #932733)
+  * Revert-meson-fix-logic-for-generating-.pc-files-with.patch: Revert a
+    commit which attempted to fix the .pc generating logic, but
+    regressed GLES2.
+
+  [ Sven Joachim ]
+  * rules: Re-enable asm on x32, should be fixed since mesa 17.0.0
+    (Closes: #758094).
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 10 Oct 2019 07:31:08 +0300
+
+mesa (19.2.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * rules: Enable panfrost again, should be good now. (Closes: #941136)
+  * Drop reverts on pkgconfig removals, upstream now supports building
+    them with an older libglvnd.
+  * copyright: Don't refer to BSD license file.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 01 Oct 2019 15:49:52 +0300
+
 mesa (19.2.0~rc4-1pureos+librem5.1) amber-phone; urgency=medium
 
   * Enable softpin for gc7000

@@ -306,7 +306,7 @@ void anv_GetDescriptorSetLayoutSupport(
       /* Our maximum binding table size is 240 and we need to reserve 8 for
        * render targets.
        */
-      if (surface_count[s] >= MAX_BINDING_TABLE_SIZE - MAX_RTS)
+      if (surface_count[s] > MAX_BINDING_TABLE_SIZE - MAX_RTS)
          supported = false;
    }
 
@@ -1470,9 +1470,6 @@ void anv_UpdateDescriptorSets(
          &dst->descriptors[dst_layout->descriptor_index];
       dst_desc += copy->dstArrayElement;
 
-      for (uint32_t j = 0; j < copy->descriptorCount; j++)
-         dst_desc[j] = src_desc[j];
-
       if (src_layout->data & ANV_DESCRIPTOR_INLINE_UNIFORM) {
          assert(src_layout->data == ANV_DESCRIPTOR_INLINE_UNIFORM);
          memcpy(dst->desc_mem.map + dst_layout->descriptor_offset +
@@ -1481,6 +1478,9 @@ void anv_UpdateDescriptorSets(
                                     copy->srcArrayElement,
                 copy->descriptorCount);
       } else {
+         for (uint32_t j = 0; j < copy->descriptorCount; j++)
+            dst_desc[j] = src_desc[j];
+
          unsigned desc_size = anv_descriptor_size(src_layout);
          if (desc_size > 0) {
             assert(desc_size == anv_descriptor_size(dst_layout));

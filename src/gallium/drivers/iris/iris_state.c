@@ -845,6 +845,8 @@ struct iris_vertex_buffer_state {
 
    /** The resource to source vertex data from. */
    struct pipe_resource *resource;
+
+   int offset;
 };
 
 struct iris_depth_buffer_state {
@@ -2865,6 +2867,8 @@ iris_set_vertex_buffers(struct pipe_context *ctx,
 
       pipe_resource_reference(&state->resource, buffer->buffer.resource);
       struct iris_resource *res = (void *) state->resource;
+
+      state->offset = (int) buffer->buffer_offset;
 
       if (res) {
          ice->state.bound_vertex_buffers |= 1ull << (start_slot + i);
@@ -5044,7 +5048,7 @@ iris_upload_dirty_render_state(struct iris_context *ice,
              BRW_BARYCENTRIC_NONPERSPECTIVE_BITS)
             cl.NonPerspectiveBarycentricEnable = true;
 
-         cl.ForceZeroRTAIndexEnable = cso_fb->layers == 0;
+         cl.ForceZeroRTAIndexEnable = cso_fb->layers <= 1;
          cl.MaximumVPIndex = ice->state.num_viewports - 1;
       }
       iris_emit_merge(batch, cso_rast->clip, dynamic_clip,
@@ -5841,11 +5845,11 @@ iris_destroy_state(struct iris_context *ice)
    pipe_resource_reference(&ice->draw.draw_params_res, NULL);
    pipe_resource_reference(&ice->draw.derived_draw_params_res, NULL);
 
-   uint64_t bound_vbs = ice->state.bound_vertex_buffers;
-   while (bound_vbs) {
-      const int i = u_bit_scan64(&bound_vbs);
+   /* Loop over all VBOs, including ones for draw parameters */
+   for (unsigned i = 0; i < ARRAY_SIZE(genx->vertex_buffers); i++) {
       pipe_resource_reference(&genx->vertex_buffers[i].resource, NULL);
    }
+
    free(ice->state.genx);
 
    for (int i = 0; i < 4; i++) {
@@ -5929,8 +5933,8 @@ iris_rebind_buffer(struct iris_context *ice,
          STATIC_ASSERT(GENX(VERTEX_BUFFER_STATE_BufferStartingAddress_bits) == 64);
          uint64_t *addr = (uint64_t *) &state->state[1];
 
-         if (*addr == old_address) {
-            *addr = res->bo->gtt_offset;
+         if (*addr == old_address + state->offset) {
+            *addr = res->bo->gtt_offset + state->offset;
             ice->state.dirty |= IRIS_DIRTY_VERTEX_BUFFERS;
          }
       }

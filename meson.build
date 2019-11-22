@@ -42,7 +42,7 @@ pre_args = [
   '-D__STDC_FORMAT_MACROS',
   '-D__STDC_LIMIT_MACROS',
   '-DPACKAGE_VERSION="@0@"'.format(meson.project_version()),
-  '-DPACKAGE_BUGREPORT="https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa"',
+  '-DPACKAGE_BUGREPORT="https://gitlab.freedesktop.org/mesa/mesa/issues"',
 ]
 
 with_vulkan_icd_dir = get_option('vulkan-icd-dir')
@@ -93,7 +93,7 @@ with_shared_glapi = get_option('shared-glapi')
 
 # shared-glapi is required if at least two OpenGL APIs are being built
 if not with_shared_glapi
-  if ((with_gles1 == 'true' and with_gles2 == 'true') or 
+  if ((with_gles1 == 'true' and with_gles2 == 'true') or
       (with_gles1 == 'true' and with_opengl) or
       (with_gles2 == 'true' and with_opengl))
     error('shared-glapi required for building two or more of OpenGL, OpenGL ES 1.x, OpenGL ES 2.x')
@@ -117,7 +117,7 @@ with_any_opengl = with_opengl or with_gles1 or with_gles2
 # Only build shared_glapi if at least one OpenGL API is enabled
 with_shared_glapi = get_option('shared-glapi') and with_any_opengl
 
-system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux'].contains(host_machine.system())
+system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux', 'sunos'].contains(host_machine.system())
 
 dri_drivers = get_option('dri-drivers')
 if dri_drivers.contains('auto')
@@ -385,7 +385,7 @@ endif
 if with_glx != 'disabled'
   if not (with_platform_x11 and with_any_opengl)
     error('Cannot build GLX support without X11 platform support and at least one OpenGL API')
-  elif with_glx == 'gallium-xlib' 
+  elif with_glx == 'gallium-xlib'
     if not with_gallium
       error('Gallium-xlib based GLX requires at least one gallium driver')
     elif not with_gallium_softpipe
@@ -393,7 +393,7 @@ if with_glx != 'disabled'
     elif with_dri
       error('gallium-xlib conflicts with any dri driver')
     endif
-  elif with_glx == 'xlib' 
+  elif with_glx == 'xlib'
     if with_dri
       error('xlib conflicts with any dri driver')
     endif
@@ -502,10 +502,12 @@ elif not (with_gallium_r600 or with_gallium_nouveau)
   endif
 endif
 dep_xvmc = null_dep
+dep_xv = null_dep
 with_gallium_xvmc = false
 if _xvmc != 'false'
   dep_xvmc = dependency('xvmc', version : '>= 1.0.6', required : _xvmc == 'true')
-  with_gallium_xvmc = dep_xvmc.found()
+  dep_xv = dependency('xv', required : _xvmc == 'true')
+  with_gallium_xvmc = dep_xvmc.found() and dep_xv.found()
 endif
 
 xvmc_drivers_path = get_option('xvmc-libs-path')
@@ -856,6 +858,8 @@ endif
 # TODO: this is very incomplete
 if ['linux', 'cygwin', 'gnu', 'gnu/kfreebsd'].contains(host_machine.system())
   pre_args += '-D_GNU_SOURCE'
+elif host_machine.system() == 'sunos'
+  pre_args += '-D__EXTENSIONS__'
 endif
 
 # Check for generic C arguments
@@ -865,16 +869,12 @@ foreach a : ['-Werror=implicit-function-declaration',
              '-Werror=incompatible-pointer-types',
              '-Werror=format',
              '-Wformat-security',
+             '-Wno-missing-field-initializers',
+             '-Wno-format-truncation',
              '-fno-math-errno',
              '-fno-trapping-math', '-Qunused-arguments']
   if cc.has_argument(a)
     c_args += a
-  endif
-endforeach
-
-foreach a : ['missing-field-initializers', 'format-truncation']
-  if cc.has_argument('-W' + a)
-    c_args += '-Wno-' + a
   endif
 endforeach
 
@@ -888,6 +888,9 @@ cpp_args = []
 foreach a : ['-Werror=return-type',
              '-Werror=format',
              '-Wformat-security',
+             '-Wno-non-virtual-dtor',
+             '-Wno-missing-field-initializers',
+             '-Wno-format-truncation',
              '-fno-math-errno', '-fno-trapping-math',
              '-Qunused-arguments']
   if cpp.has_argument(a)
@@ -895,19 +898,11 @@ foreach a : ['-Werror=return-type',
   endif
 endforeach
 
-# For some reason, the test for -Wno-foo always succeeds with gcc, even if the
-# option is not supported. Hence, check for -Wfoo instead.
-
-foreach a : ['non-virtual-dtor', 'missing-field-initializers', 'format-truncation']
-  if cpp.has_argument('-W' + a)
-    cpp_args += '-Wno-' + a
-  endif
-endforeach
-
 no_override_init_args = []
-foreach a : ['override-init', 'initializer-overrides']
-  if cc.has_argument('-W' + a)
-    no_override_init_args += '-Wno-' + a
+foreach a : ['-Wno-override-init',
+             '-Wno-initializer-overrides']
+  if cc.has_argument(a)
+    no_override_init_args += a
   endif
 endforeach
 
@@ -1041,7 +1036,7 @@ foreach h : ['xlocale.h', 'sys/sysctl.h', 'linux/futex.h', 'endian.h', 'dlfcn.h'
   endif
 endforeach
 
-foreach f : ['strtof', 'mkostemp', 'posix_memalign', 'timespec_get', 'memfd_create', 'random_r']
+foreach f : ['strtof', 'mkostemp', 'posix_memalign', 'timespec_get', 'memfd_create', 'random_r', 'flock']
   if cc.has_function(f)
     pre_args += '-DHAVE_@0@'.format(f.to_upper())
   endif
@@ -1307,8 +1302,12 @@ else
 endif
 
 dep_glvnd = null_dep
+glvnd_has_headers_and_pc_files = false
 if with_glvnd
   dep_glvnd = dependency('libglvnd', version : '>= 0.2.0')
+  # GLVND before 1.2 was missing its pkg-config and header files, forcing every
+  # vendor to provide them and the distro maintainers to resolve the conflict.
+  glvnd_has_headers_and_pc_files = dep_glvnd.version().version_compare('>= 1.2.0')
   pre_args += '-DUSE_LIBGLVND=1'
 endif
 
@@ -1419,6 +1418,9 @@ if with_platform_x11
         with_gallium_omx != 'disabled'))
     dep_xcb = dependency('xcb')
     dep_x11_xcb = dependency('x11-xcb')
+    if with_dri_platform == 'drm' and not dep_libdrm.found()
+      error('libdrm required for gallium video statetrackers when using x11')
+    endif
   endif
   if with_any_vk or with_egl or (with_glx == 'dri' and with_dri_platform == 'drm')
     dep_xcb_dri2 = dependency('xcb-dri2', version : '>= 1.8')
@@ -1439,7 +1441,7 @@ if with_platform_x11
   if with_glx == 'dri' or with_glx == 'gallium-xlib'
     dep_glproto = dependency('glproto', version : '>= 1.4.14')
   endif
-  if with_glx == 'dri' 
+  if with_glx == 'dri'
     if with_dri_platform == 'drm'
       dep_dri2proto = dependency('dri2proto', version : '>= 2.8')
       dep_xxf86vm = dependency('xxf86vm')

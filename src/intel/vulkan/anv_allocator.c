@@ -532,9 +532,11 @@ anv_block_pool_expand_range(struct anv_block_pool *pool,
    if (use_softpin) {
       gem_handle = anv_gem_create(pool->device, newbo_size);
       map = anv_gem_mmap(pool->device, gem_handle, 0, newbo_size, 0);
-      if (map == MAP_FAILED)
+      if (map == MAP_FAILED) {
+         anv_gem_close(pool->device, gem_handle);
          return vk_errorf(pool->device->instance, pool->device,
                           VK_ERROR_MEMORY_MAP_FAILED, "gem mmap failed: %m");
+      }
       assert(center_bo_offset == 0);
    } else {
       /* Just leak the old map until we destroy the pool.  We can't munmap it
@@ -1520,7 +1522,19 @@ anv_scratch_pool_alloc(struct anv_device *device, struct anv_scratch_pool *pool,
    const unsigned subslices = MAX2(physical_device->subslice_total, 1);
 
    unsigned scratch_ids_per_subslice;
-   if (devinfo->is_haswell) {
+   if (devinfo->gen >= 11) {
+      /* The MEDIA_VFE_STATE docs say:
+       *
+       *    "Starting with this configuration, the Maximum Number of
+       *     Threads must be set to (#EU * 8) for GPGPU dispatches.
+       *
+       *     Although there are only 7 threads per EU in the configuration,
+       *     the FFTID is calculated as if there are 8 threads per EU,
+       *     which in turn requires a larger amount of Scratch Space to be
+       *     allocated by the driver."
+       */
+      scratch_ids_per_subslice = 8 * 8;
+   } else if (devinfo->is_haswell) {
       /* WaCSScratchSize:hsw
        *
        * Haswell's scratch space address calculation appears to be sparse
