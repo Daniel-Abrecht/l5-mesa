@@ -144,7 +144,7 @@ Description: generic buffer management API -- development files
 
 Package: libegl-mesa0
 Section: libs
-Architecture: any
+Architecture: arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -161,7 +161,7 @@ Description: free implementation of the EGL API -- Mesa vendor library
 
 Package: libegl1-mesa
 Section: oldlibs
-Architecture: any
+Architecture: arm64
 Depends:
  libegl1,
  ${misc:Depends},
@@ -171,7 +171,7 @@ Description: transitional dummy package
 
 Package: libegl1-mesa-dev
 Section: libdevel
-Architecture: any
+Architecture: arm64
 Depends:
  mesa-common-dev (= ${binary:Version}),
  libglvnd-dev,
@@ -215,7 +215,7 @@ Description: transitional dummy package
 
 Package: libgles2-mesa
 Section: oldlibs
-Architecture: any
+Architecture: arm64
 Depends:
  libgles2,
  ${misc:Depends},
@@ -225,7 +225,7 @@ Description: transitional dummy package
 
 Package: libgles2-mesa-dev
 Section: libdevel
-Architecture: any
+Architecture: arm64
 Depends:
  libegl1-mesa-dev,
  libglvnd-dev,
@@ -245,7 +245,7 @@ Description: free implementation of the OpenGL|ES 2.x API -- development files
 
 Package: libglapi-mesa
 Section: libs
-Architecture: any
+Architecture: arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -258,7 +258,7 @@ Description: free implementation of the GL API -- shared library
 
 Package: libglx-mesa0
 Section: libs
-Architecture: any
+Architecture: arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -287,7 +287,7 @@ Description: free implementation of the OpenGL API -- GLX vendor library
 
 Package: libgl1-mesa-glx
 Section: oldlibs
-Architecture: any
+Architecture: arm64
 Depends:
  libgl1,
  libglx-mesa0,
@@ -298,7 +298,7 @@ Description: transitional dummy package
 
 Package: libgl1-mesa-dri
 Section: libs
-Architecture: any
+Architecture: arm64
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${shlibs:Depends},
@@ -317,7 +317,7 @@ Description: free implementation of the OpenGL API -- DRI modules
 
 Package: libgl1-mesa-dev
 Section: libdevel
-Architecture: any
+Architecture: arm64
 Depends:
  mesa-common-dev (= ${binary:Version}),
  libglvnd-dev,
@@ -353,7 +353,7 @@ Description: free implementation of the OpenGL API -- GLX development files
 
 Package: mesa-common-dev
 Section: libdevel
-Architecture: any
+Architecture: arm64
 Depends:
  libx11-dev,
  libdrm-dev (>= 2.4.95) [!hurd-any],
@@ -368,7 +368,7 @@ Description: Developer documentation for Mesa
 
 Package: libosmesa6
 Section: libs
-Architecture: any
+Architecture: arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -385,7 +385,7 @@ Description: Mesa Off-screen rendering extension
 
 Package: libosmesa6-dev
 Section: libdevel
-Architecture: any
+Architecture: arm64
 Depends:
  libosmesa6 (= ${binary:Version}),
  mesa-common-dev (= ${binary:Version}) | libgl-dev,
