@@ -114,7 +114,7 @@ Description: state-tracker for Direct3D9 -- development files
 
 Package: libgbm1
 Section: libs
-Architecture: linux-any kfreebsd-any
+Architecture: arm64 kfreebsd-any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -128,7 +128,7 @@ Description: generic buffer management API -- runtime
 
 Package: libgbm-dev
 Section: libdevel
-Architecture: linux-any kfreebsd-any
+Architecture: arm64 kfreebsd-any
 Depends:
  libgbm1 (= ${binary:Version}),
  ${misc:Depends},
@@ -203,7 +203,7 @@ Description: free implementation of the EGL API -- development files
 
 Package: libwayland-egl1-mesa
 Section: oldlibs
-Architecture: linux-any
+Architecture: arm64
 Depends:
  ${misc:Depends},
  libegl1,
@@ -402,7 +402,7 @@ Description: Mesa Off-screen rendering extension -- development files
 
 Package: mesa-va-drivers
 Section: libs
-Architecture: linux-any kfreebsd-any
+Architecture: arm64 kfreebsd-any
 Build-Profiles: <!pkg.mesa.nolibva>
 Depends:
  ${shlibs:Depends},
@@ -424,7 +424,7 @@ Description: Mesa VA-API video acceleration drivers
 
 Package: mesa-vdpau-drivers
 Section: libs
-Architecture: linux-any kfreebsd-any
+Architecture: arm64 kfreebsd-any
 Depends:
  libvdpau1,
  ${shlibs:Depends},
