@@ -1,3 +1,10 @@
+mesa (19.2.4-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Rebase on top of Debian's 19.2.4-1
+  * Drop symbolic links to make dpkg-source happy
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 22 Nov 2019 19:52:05 +0100
+
 mesa (19.2.4-1) unstable; urgency=medium
 
   * New upstream release. (Closes: #944880)
