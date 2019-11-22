@@ -54,7 +54,7 @@ Homepage: https://mesa3d.org/
 
 Package: libxatracker2
 Section: libs
-Architecture: amd64 i386 x32
+Architecture: i386 x32
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -68,7 +68,7 @@ Description: X acceleration library -- runtime
 
 Package: libxatracker-dev
 Section: libdevel
-Architecture: amd64 i386 x32
+Architecture: i386 x32
 Depends:
  libxatracker2 (= ${binary:Version}),
  ${misc:Depends},
@@ -84,7 +84,7 @@ Description: X acceleration library -- development files
 
 Package: libd3dadapter9-mesa
 Section: libs
-Architecture: amd64 armel armhf i386 kfreebsd-i386 powerpc
+Architecture: armel armhf i386 kfreebsd-i386 powerpc
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -98,7 +98,7 @@ Description: state-tracker for Direct3D9
 
 Package: libd3dadapter9-mesa-dev
 Section: libdevel
-Architecture: amd64 armel armhf i386 kfreebsd-i386 powerpc
+Architecture: armel armhf i386 kfreebsd-i386 powerpc
 Depends:
  libd3dadapter9-mesa (= ${binary:Version}),
  libudev1 [linux-any],
@@ -444,7 +444,7 @@ Description: Mesa VDPAU video acceleration drivers
 
 Package: mesa-vulkan-drivers
 Section: libs
-Architecture: amd64 armel armhf i386 mips mips64el mipsel powerpc ppc64 ppc64el s390x sparc64 x32
+Architecture: armel armhf i386 mips mips64el mipsel powerpc ppc64 ppc64el s390x sparc64 x32
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  libvulkan1,
@@ -458,7 +458,7 @@ Description: Mesa Vulkan graphics drivers
 
 Package: mesa-opencl-icd
 Section: libs
-Architecture: amd64 armel armhf i386 kfreebsd-amd64 kfreebsd-i386 mips mips64el mipsel powerpc ppc64 ppc64el s390x sparc64
+Architecture: armel armhf i386 kfreebsd-amd64 kfreebsd-i386 mips mips64el mipsel powerpc ppc64 ppc64el s390x sparc64
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  libclc-r600 (>= 0.2.0+git20180312-1~),
