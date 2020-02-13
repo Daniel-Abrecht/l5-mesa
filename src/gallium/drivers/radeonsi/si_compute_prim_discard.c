@@ -702,6 +702,7 @@ void si_build_prim_discard_compute_shader(struct si_shader_context *ctx)
 				 vp_scale, vp_translate, smallprim_precision,
 				 &options);
 
+	ac_build_optimization_barrier(&ctx->ac, &accepted);
 	LLVMValueRef accepted_threadmask = ac_get_i1_sgpr_mask(&ctx->ac, accepted);
 
 	/* Count the number of active threads by doing bitcount(accepted). */
@@ -977,7 +978,7 @@ static bool si_initialize_prim_discard_cmdbuf(struct si_context *sctx)
 						 SI_RESOURCE_FLAG_UNMAPPABLE,
 						 PIPE_USAGE_DEFAULT,
 						 sctx->index_ring_size_per_ib * 2,
-						 2 * 1024 * 1024);
+						 sctx->screen->info.pte_fragment_size);
 		if (!sctx->index_ring)
 			return false;
 	}

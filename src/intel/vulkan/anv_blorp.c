@@ -117,6 +117,9 @@ anv_device_init_blorp(struct anv_device *device)
    case 11:
       device->blorp.exec = gen11_blorp_exec;
       break;
+   case 12:
+      device->blorp.exec = gen12_blorp_exec;
+      break;
    default:
       unreachable("Unknown hardware generation");
    }
@@ -400,6 +403,24 @@ void anv_CmdCopyImage(
    blorp_batch_finish(&batch);
 }
 
+static enum isl_format
+isl_format_for_size(unsigned size_B)
+{
+   /* Prefer 32-bit per component formats for CmdFillBuffer */
+   switch (size_B) {
+   case 1:  return ISL_FORMAT_R8_UINT;
+   case 2:  return ISL_FORMAT_R16_UINT;
+   case 3:  return ISL_FORMAT_R8G8B8_UINT;
+   case 4:  return ISL_FORMAT_R32_UINT;
+   case 6:  return ISL_FORMAT_R16G16B16_UINT;
+   case 8:  return ISL_FORMAT_R32G32_UINT;
+   case 12: return ISL_FORMAT_R32G32B32_UINT;
+   case 16: return ISL_FORMAT_R32G32B32A32_UINT;
+   default:
+      unreachable("Unknown format size");
+   }
+}
+
 static void
 copy_buffer_to_image(struct anv_cmd_buffer *cmd_buffer,
                      struct anv_buffer *anv_buffer,
@@ -447,32 +468,49 @@ copy_buffer_to_image(struct anv_cmd_buffer *cmd_buffer,
             anv_get_layerCount(anv_image, &pRegions[r].imageSubresource);
       }
 
-      const enum isl_format buffer_format =
+      const enum isl_format linear_format =
          anv_get_isl_format(&cmd_buffer->device->info, anv_image->vk_format,
                             aspect, VK_IMAGE_TILING_LINEAR);
+      const struct isl_format_layout *linear_fmtl =
+         isl_format_get_layout(linear_format);
 
-      const VkExtent3D bufferImageExtent = {
-         .width  = pRegions[r].bufferRowLength ?
-                   pRegions[r].bufferRowLength : extent.width,
-         .height = pRegions[r].bufferImageHeight ?
-                   pRegions[r].bufferImageHeight : extent.height,
-      };
+      const uint32_t buffer_row_length =
+         pRegions[r].bufferRowLength ?
+         pRegions[r].bufferRowLength : extent.width;
 
-      const struct isl_format_layout *buffer_fmtl =
-         isl_format_get_layout(buffer_format);
+      const uint32_t buffer_image_height =
+         pRegions[r].bufferImageHeight ?
+         pRegions[r].bufferImageHeight : extent.height;
 
       const uint32_t buffer_row_pitch =
-         DIV_ROUND_UP(bufferImageExtent.width, buffer_fmtl->bw) *
-         (buffer_fmtl->bpb / 8);
+         DIV_ROUND_UP(buffer_row_length, linear_fmtl->bw) *
+         (linear_fmtl->bpb / 8);
 
       const uint32_t buffer_layer_stride =
-         DIV_ROUND_UP(bufferImageExtent.height, buffer_fmtl->bh) *
+         DIV_ROUND_UP(buffer_image_height, linear_fmtl->bh) *
          buffer_row_pitch;
+
+      /* Some formats have additional restrictions which may cause ISL to
+       * fail to create a surface for us.  Some examples include:
+       *
+       *    1. ASTC formats are not allowed to be LINEAR and must be tiled
+       *    2. YCbCr formats have to have 2-pixel aligned strides
+       *
+       * To avoid these issues, we always bind the buffer as if it's a
+       * "normal" format like RGBA32_UINT.  Since we're using blorp_copy,
+       * the format doesn't matter as long as it has the right bpb.
+       */
+      const VkExtent2D buffer_extent = {
+         .width = DIV_ROUND_UP(extent.width, linear_fmtl->bw),
+         .height = DIV_ROUND_UP(extent.height, linear_fmtl->bh),
+      };
+      const enum isl_format buffer_format =
+         isl_format_for_size(linear_fmtl->bpb / 8);
 
       struct isl_surf buffer_isl_surf;
       get_blorp_surf_for_anv_buffer(cmd_buffer->device,
                                     anv_buffer, pRegions[r].bufferOffset,
-                                    extent.width, extent.height,
+                                    buffer_extent.width, buffer_extent.height,
                                     buffer_row_pitch, buffer_format,
                                     &buffer.surf, &buffer_isl_surf);
 
@@ -686,18 +724,6 @@ void anv_CmdBlitImage(
    }
 
    blorp_batch_finish(&batch);
-}
-
-static enum isl_format
-isl_format_for_size(unsigned size_B)
-{
-   switch (size_B) {
-   case 4:  return ISL_FORMAT_R32_UINT;
-   case 8:  return ISL_FORMAT_R32G32_UINT;
-   case 16: return ISL_FORMAT_R32G32B32A32_UINT;
-   default:
-      unreachable("Not a power-of-two format size");
-   }
 }
 
 /**
@@ -1524,6 +1550,13 @@ anv_image_clear_depth_stencil(struct anv_cmd_buffer *cmd_buffer,
                                    ISL_AUX_USAGE_NONE, &stencil);
    }
 
+   /* Blorp may choose to clear stencil using RGBA32_UINT for better
+    * performance.  If it does this, we need to flush it out of the depth
+    * cache before rendering to it.
+    */
+   cmd_buffer->state.pending_pipe_bits |=
+      ANV_PIPE_DEPTH_CACHE_FLUSH_BIT | ANV_PIPE_CS_STALL_BIT;
+
    blorp_clear_depth_stencil(&batch, &depth, &stencil,
                              level, base_layer, layer_count,
                              area.offset.x, area.offset.y,
@@ -1533,6 +1566,13 @@ anv_image_clear_depth_stencil(struct anv_cmd_buffer *cmd_buffer,
                              depth_value,
                              (aspects & VK_IMAGE_ASPECT_STENCIL_BIT) ? 0xff : 0,
                              stencil_value);
+
+   /* Blorp may choose to clear stencil using RGBA32_UINT for better
+    * performance.  If it does this, we need to flush it out of the render
+    * cache before someone starts trying to do stencil on it.
+    */
+   cmd_buffer->state.pending_pipe_bits |=
+      ANV_PIPE_RENDER_TARGET_CACHE_FLUSH_BIT | ANV_PIPE_CS_STALL_BIT;
 
    struct blorp_surf stencil_shadow;
    if ((aspects & VK_IMAGE_ASPECT_STENCIL_BIT) &&
@@ -1682,7 +1722,8 @@ anv_image_mcs_op(struct anv_cmd_buffer *cmd_buffer,
 
    struct blorp_batch batch;
    blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer,
-                    predicate ? BLORP_BATCH_PREDICATE_ENABLE : 0);
+                    BLORP_BATCH_PREDICATE_ENABLE * predicate +
+                    BLORP_BATCH_NO_UPDATE_CLEAR_COLOR * !clear_value);
 
    struct blorp_surf surf;
    get_blorp_surf_for_anv_image(cmd_buffer->device, image, aspect,
@@ -1691,17 +1732,10 @@ anv_image_mcs_op(struct anv_cmd_buffer *cmd_buffer,
 
    /* Blorp will store the clear color for us if we provide the clear color
     * address and we are doing a fast clear. So we save the clear value into
-    * the blorp surface. However, in some situations we want to do a fast clear
-    * without changing the clear value stored in the state buffer. For those
-    * cases, we set the clear color address pointer to NULL, so blorp will not
-    * try to store a garbage color.
+    * the blorp surface.
     */
-   if (mcs_op == ISL_AUX_OP_FAST_CLEAR) {
-      if (clear_value)
-         surf.clear_color = *clear_value;
-      else
-         surf.clear_color_addr.buffer = NULL;
-   }
+   if (clear_value)
+      surf.clear_color = *clear_value;
 
    /* From the Sky Lake PRM Vol. 7, "Render Target Fast Clear":
     *
@@ -1768,7 +1802,8 @@ anv_image_ccs_op(struct anv_cmd_buffer *cmd_buffer,
 
    struct blorp_batch batch;
    blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer,
-                    predicate ? BLORP_BATCH_PREDICATE_ENABLE : 0);
+                    BLORP_BATCH_PREDICATE_ENABLE * predicate +
+                    BLORP_BATCH_NO_UPDATE_CLEAR_COLOR * !clear_value);
 
    struct blorp_surf surf;
    get_blorp_surf_for_anv_image(cmd_buffer->device, image, aspect,
@@ -1778,17 +1813,10 @@ anv_image_ccs_op(struct anv_cmd_buffer *cmd_buffer,
 
    /* Blorp will store the clear color for us if we provide the clear color
     * address and we are doing a fast clear. So we save the clear value into
-    * the blorp surface. However, in some situations we want to do a fast clear
-    * without changing the clear value stored in the state buffer. For those
-    * cases, we set the clear color address pointer to NULL, so blorp will not
-    * try to store a garbage color.
+    * the blorp surface.
     */
-   if (ccs_op == ISL_AUX_OP_FAST_CLEAR) {
-      if (clear_value)
-         surf.clear_color = *clear_value;
-      else
-         surf.clear_color_addr.buffer = NULL;
-   }
+   if (clear_value)
+      surf.clear_color = *clear_value;
 
    /* From the Sky Lake PRM Vol. 7, "Render Target Fast Clear":
     *

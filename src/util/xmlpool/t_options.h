@@ -80,6 +80,11 @@ DRI_CONF_OPT_BEGIN_B(disable_blend_func_extended, def) \
         DRI_CONF_DESC(en,gettext("Disable dual source blending")) \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_DISABLE_ARB_GPU_SHADER5(def) \
+DRI_CONF_OPT_BEGIN_B(disable_arb_gpu_shader5, def) \
+        DRI_CONF_DESC(en,"Disable GL_ARB_gpu_shader5") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_DUAL_COLOR_BLEND_BY_LOCATION(def) \
 DRI_CONF_OPT_BEGIN_B(dual_color_blend_by_location, def) \
         DRI_CONF_DESC(en,gettext("Identify dual color blending sources by location rather than index")) \
@@ -274,6 +279,11 @@ DRI_CONF_OPT_BEGIN_B(glsl_zero_init, def) \
         DRI_CONF_DESC(en,gettext("Force uninitialized variables to default to zero")) \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_VS_POSITION_ALWAYS_INVARIANT(def) \
+DRI_CONF_OPT_BEGIN_B(vs_position_always_invariant, def) \
+        DRI_CONF_DESC(en,gettext("Force the vertex shader's gl_Position output to be considered 'invariant'")) \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_ALLOW_RGB10_CONFIGS(def) \
 DRI_CONF_OPT_BEGIN_B(allow_rgb10_configs, def) \
 DRI_CONF_DESC(en,gettext("Allow exposure of visuals and fbconfigs with rgb10a2 formats")) \
@@ -282,6 +292,11 @@ DRI_CONF_OPT_END
 #define DRI_CONF_ALLOW_RGB565_CONFIGS(def) \
 DRI_CONF_OPT_BEGIN_B(allow_rgb565_configs, def) \
 DRI_CONF_DESC(en,gettext("Allow exposure of visuals and fbconfigs with rgb565 formats")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_ALLOW_FP16_CONFIGS(def) \
+DRI_CONF_OPT_BEGIN_B(allow_fp16_configs, def) \
+DRI_CONF_DESC(en,gettext("Allow exposure of visuals and fbconfigs with fp16 formats")) \
 DRI_CONF_OPT_END
 
 /**

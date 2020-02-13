@@ -421,25 +421,19 @@ msm_ringbuffer_sp_emit_reloc(struct fd_ringbuffer *ring,
 	}
 
 	uint64_t iova = fd_bo_get_iova(reloc->bo) + reloc->offset;
-	uint32_t dword = iova;
 	int shift = reloc->shift;
 
 	if (shift < 0)
-		dword >>= -shift;
+		iova >>= -shift;
 	else
-		dword <<= shift;
+		iova <<= shift;
+
+	uint32_t dword = iova;
 
 	(*ring->cur++) = dword | reloc->or;
 
 	if (pipe->gpu_id >= 500) {
 		dword = iova >> 32;
-		shift -= 32;
-
-		if (shift < 0)
-			dword >>= -shift;
-		else
-			dword <<= shift;
-
 		(*ring->cur++) = dword | reloc->orhi;
 	}
 }
@@ -515,6 +509,7 @@ msm_ringbuffer_sp_destroy(struct fd_ringbuffer *ring)
 		for (unsigned i = 0; i < msm_ring->u.nr_reloc_bos; i++) {
 			fd_bo_del(msm_ring->u.reloc_bos[i].bo);
 		}
+		free(msm_ring->u.reloc_bos);
 
 		free(msm_ring);
 	} else {
@@ -523,6 +518,7 @@ msm_ringbuffer_sp_destroy(struct fd_ringbuffer *ring)
 		for (unsigned i = 0; i < msm_ring->u.nr_cmds; i++) {
 			fd_bo_del(msm_ring->u.cmds[i].ring_bo);
 		}
+		free(msm_ring->u.cmds);
 
 		slab_free(&to_msm_submit_sp(submit)->ring_pool, msm_ring);
 	}

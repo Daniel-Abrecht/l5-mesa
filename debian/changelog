@@ -1,3 +1,88 @@
+mesa (19.3.3-1) unstable; urgency=medium
+
+  * New upstream release.
+  * rules: Build zink on x86.
+  * control: Add libglvnd-dev to libegl1-mesa-dev/libgles2-mesa-
+    dev/libgl1-mesa-dev Depends to ease the transition. (Closes: #949677)
+  * drisw-fix-depth-for-ximage.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 28 Jan 2020 21:45:02 +0200
+
+mesa (19.3.2-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 15 Jan 2020 14:55:29 +0200
+
+mesa (19.3.1-4) unstable; urgency=medium
+
+  [ Julien Cristau ]
+  * Ensure strict dependencies on libglapi-mesa (closes: #947813).
+
+  [ Timo Aaltonen ]
+  * control: Add libgl{,x}-dev to mesa-common-dev Depends. (Closes:
+    #947392)
+  * drisw-fix-depth-for-ximage.diff: Fix sw driver rgbBits/depth calculation.
+    (Closes: #947196)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 08 Jan 2020 11:38:56 +0200
+
+mesa (19.3.1-3) unstable; urgency=medium
+
+  * control, rules: Actually build radv on mipsel, drop mips from
+    everywhere since it's not an arch anymore. (Closes: #947310)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 25 Dec 2019 22:05:01 +0200
+
+mesa (19.3.1-2) unstable; urgency=medium
+
+  * rules: Build radv on mips/mipsel again.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Dec 2019 23:17:58 +0200
+
+mesa (19.3.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-radv-secure-compile.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Dec 2019 16:45:25 +0200
+
+mesa (19.3.0-1) experimental; urgency=medium
+
+  * New upstream release.
+  * fix-radv-secure-compile.diff: Fix radv build where __NR__newselect
+    isn't defined.
+  * rules: Restore radv build on non-x86 archs.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 13 Dec 2019 01:39:02 +0200
+
+mesa (19.3.0~rc6-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * control, rules: Don't build radv on non-x86.
+  * Don't install EGL/GL/GLES headers or pkg-config files, they're
+    shipped by libglvnd 1.3.0 now. Make old -dev packages transitional,
+    except libegl1-mesa-dev which still has two mesa specific headers.
+  * generate-pc-files-for-gles-and-gles2.diff: Dropped, not needed anymore.
+  * rules: Update clean target.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Dec 2019 13:29:49 +0200
+
+mesa (19.3.0~rc5-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * generate-pc-files-for-gles-and-gles2.diff: This is needed until we
+    have glvnd 1.2 in the archive.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 29 Nov 2019 21:56:04 +0200
+
+mesa (19.2.6-1) unstable; urgency=medium
+
+  * New upstream release.
+  * create-gles-pc-files-with-old-glvnd.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 29 Nov 2019 21:08:25 +0200
+
 mesa (19.2.4-1pureos+librem5.1) amber-phone; urgency=medium
 
   * Rebase on top of Debian's 19.2.4-1

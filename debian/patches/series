@@ -1,8 +1,1 @@
 07_gallium-fix-build-failure-on-powerpcspe.diff
-etnaviv-drm-update-DRM-interface-header-to-include-softpi.patch
-etnaviv-drm-add-softpin-interface.patch
-etnaviv-check-for-softpin-availability-on-Halti5-devices.patch
-etnaviv-GC7000-Texture-descriptors.patch
-etnaviv-add-linear-texture-support-on-GC7000.patch
-etnaviv-GC7000-flush-TX-descriptor-and-instruction-cache.patch
-create-gles-pc-files-with-old-glvnd.diff
