@@ -1030,7 +1030,8 @@ try_immediate_source(const nir_alu_instr *instr, src_reg *op,
       } else {
          uint8_t vf_values[4] = { 0, 0, 0, 0 };
 
-         for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++) {
+         for (unsigned i = 0; i < ARRAY_SIZE(vf_values); i++) {
+
             if (op[idx].abs)
                f[i] = fabs(f[i]);
 
@@ -1379,6 +1380,12 @@ vec4_visitor::nir_emit_alu(nir_alu_instr *instr)
 
    case nir_op_ftrunc:
       inst = emit(RNDZ(dst, op[0]));
+      if (devinfo->gen < 6) {
+         inst->conditional_mod = BRW_CONDITIONAL_R;
+         inst = emit(ADD(dst, src_reg(dst), brw_imm_f(1.0f)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(MOV(dst, src_reg(dst))); /* for potential saturation */
+      }
       inst->saturate = instr->dest.saturate;
       break;
 
@@ -1409,6 +1416,12 @@ vec4_visitor::nir_emit_alu(nir_alu_instr *instr)
 
    case nir_op_fround_even:
       inst = emit(RNDE(dst, op[0]));
+      if (devinfo->gen < 6) {
+         inst->conditional_mod = BRW_CONDITIONAL_R;
+         inst = emit(ADD(dst, src_reg(dst), brw_imm_f(1.0f)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(MOV(dst, src_reg(dst))); /* for potential saturation */
+      }
       inst->saturate = instr->dest.saturate;
       break;
 
