@@ -1,3 +1,9 @@
+mesa (20.0.0-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Update to Debian's 20.0.0-1
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Fri, 28 Feb 2020 00:09:08 +0100
+
 mesa (20.0.0-1) experimental; urgency=medium
 
   * New upstream release.
