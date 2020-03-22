@@ -1,3 +1,23 @@
+mesa (20.0.2-1) unstable; urgency=medium
+
+  * New upstream release.
+  * control: Revert to building with llvm/clang-9, until it builds with
+    10.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Mar 2020 16:03:53 +0200
+
+mesa (20.0.1-2) experimental; urgency=medium
+
+  * control: Fix clang build-dep to actually use libclang-10-dev.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Mar 2020 23:20:30 +0200
+
+mesa (20.0.1-1) experimental; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Mar 2020 17:40:08 +0200
+
 mesa (20.0.0-1pureos+librem5.1) amber-phone; urgency=medium
 
   * Update to Debian's 20.0.0-1
