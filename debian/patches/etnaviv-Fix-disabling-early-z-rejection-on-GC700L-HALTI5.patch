@@ -1,0 +1,77 @@
+From 143461c9bcfdc4a3499e679c0c832c4fa8bedb36 Mon Sep 17 00:00:00 2001
+From: "Lukas F. Hartmann" <lukas@mntre.com>
+Date: Sat, 13 Jun 2020 20:55:44 +0200
+Subject: [PATCH] etnaviv: Fix disabling early-z rejection on GC7000L (HALTI5)
+
+The VIVS_PE_DEPTH_CONFIG_DISABLE_ZS in PE_DEPTH_CONFIG caused depth
+write hangs on HALTI5.
+This is because the 0x11000000 bits in RA have to be toggled on
+when setting this bit to zero. This combination will disable
+early-z rejection on GC7000L, which was previously done through
+a different bit.
+Tested only on GC7000L so far.
+
+Signed-off-by: Lukas F. Hartmann <lukas@mntre.com>
+---
+ src/gallium/drivers/etnaviv/etnaviv_emit.c  | 6 ++++++
+ src/gallium/drivers/etnaviv/etnaviv_state.c | 4 +---
+ src/gallium/drivers/etnaviv/etnaviv_zsa.c   | 4 +++-
+ 3 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_emit.c b/src/gallium/drivers/etnaviv/etnaviv_emit.c
+index de36aeb7f9b..86dda400504 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_emit.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_emit.c
+@@ -128,6 +128,9 @@ emit_halti5_only_state(struct etna_context *ctx, int vs_output_count)
+    struct etna_cmd_stream *stream = ctx->stream;
+    uint32_t dirty = ctx->dirty;
+    struct etna_coalesce coalesce;
++   uint32_t depth_config = ((etna_zsa_state(ctx->zsa)->PE_DEPTH_CONFIG |
++                              ctx->framebuffer.PE_DEPTH_CONFIG) &
++                              ctx->shader_state.PE_DEPTH_CONFIG);
+ 
+    etna_coalesce_start(stream, &coalesce);
+    if (unlikely(dirty & (ETNA_DIRTY_SHADER))) {
+@@ -152,6 +155,9 @@ emit_halti5_only_state(struct etna_context *ctx, int vs_output_count)
+       /*01084*/ EMIT_STATE(PS_VARYING_NUM_COMPONENTS(1), ctx->shader_state.GL_VARYING_NUM_COMPONENTS[1]);
+       /*03888*/ EMIT_STATE(GL_HALTI5_SH_SPECIALS, ctx->shader_state.GL_HALTI5_SH_SPECIALS);
+    }
++   if (!(depth_config & VIVS_PE_DEPTH_CONFIG_EARLY_Z)) {
++      EMIT_STATE(RA_EARLY_DEPTH, 0x11000031);
++   }
+    etna_coalesce_end(stream, &coalesce);
+ }
+ 
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_state.c b/src/gallium/drivers/etnaviv/etnaviv_state.c
+index efafd1238c7..e25d78ddb3a 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_state.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_state.c
+@@ -250,9 +250,7 @@ etna_set_framebuffer_state(struct pipe_context *pctx,
+          depth_format |
+          COND(depth_supertiled, VIVS_PE_DEPTH_CONFIG_SUPER_TILED) |
+          VIVS_PE_DEPTH_CONFIG_DEPTH_MODE_Z |
+-         VIVS_PE_DEPTH_CONFIG_UNK18 | /* something to do with clipping? */
+-         COND(screen->specs.halti >= 5, VIVS_PE_DEPTH_CONFIG_DISABLE_ZS) /* Needs to be enabled on GC7000, otherwise depth writes hang w/ TS - apparently it does something else now */
+-         ;
++         VIVS_PE_DEPTH_CONFIG_UNK18; /* something to do with clipping? */
+       /* VIVS_PE_DEPTH_CONFIG_ONLY_DEPTH */
+       /* merged with depth_stencil_alpha */
+ 
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_zsa.c b/src/gallium/drivers/etnaviv/etnaviv_zsa.c
+index afff6b7d9c9..c6dcfde6a89 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_zsa.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_zsa.c
+@@ -110,7 +110,9 @@ etna_zsa_state_create(struct pipe_context *pctx,
+       COND(so->depth.writemask, VIVS_PE_DEPTH_CONFIG_WRITE_ENABLE) |
+       COND(early_z, VIVS_PE_DEPTH_CONFIG_EARLY_Z) |
+       /* this bit changed meaning with HALTI5: */
+-      COND(disable_zs && screen->specs.halti < 5, VIVS_PE_DEPTH_CONFIG_DISABLE_ZS);
++      COND((disable_zs && screen->specs.halti < 5) || (early_z && screen->specs.halti >= 5),
++         VIVS_PE_DEPTH_CONFIG_DISABLE_ZS);
++
+    cs->PE_ALPHA_OP =
+       COND(so->alpha.enabled, VIVS_PE_ALPHA_OP_ALPHA_TEST) |
+       VIVS_PE_ALPHA_OP_ALPHA_FUNC(so->alpha.func) |
+-- 
+2.26.2
+
