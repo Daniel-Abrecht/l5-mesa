@@ -1,10 +1,10 @@
 .lava-test:
   extends:
     - .ci-run-policy
-  stage: test
   variables:
     GIT_STRATEGY: none # testing doesn't build anything from source
-    ENV_VARS: "MESA_GLES_VERSION_OVERRIDE=3.0 DEQP_PARALLEL=6"
+    ENV_VARS: "DEQP_PARALLEL=6"
+    DEQP_VERSION: gles2
   script:
     - mkdir -p /srv/${FILES_HOST_NAME}/$CI_JOB_ID/
     - cp /lava-files/${KERNEL_IMAGE_NAME} /srv/${FILES_HOST_NAME}/$CI_JOB_ID/.
@@ -21,7 +21,7 @@
         --device-type ${DEVICE_TYPE} \
         --env-vars "${ENV_VARS}" \
         --arch ${ARCH} \
-        --deqp-version gles2 \
+        --deqp-version ${DEQP_VERSION} \
         --kernel-image-name ${KERNEL_IMAGE_NAME} \
         --kernel-image-type "${KERNEL_IMAGE_TYPE}" \
         --gpu-version ${GPU_VERSION} \
@@ -33,7 +33,7 @@
     - echo $lava_job_id
     - rm -rf artifacts/*
     - cp lava-deqp.yml artifacts/.
-    - lavacli jobs logs $lava_job_id | grep -a -v "{'case':" | tee artifacts/lava-deqp-$lava_job_id.log
+    - lavacli jobs logs $lava_job_id | tee artifacts/lava-deqp-$lava_job_id.log
     - lavacli jobs show $lava_job_id
     - result=`lavacli results $lava_job_id 0_deqp deqp | head -1`
     - echo $result
@@ -41,6 +41,7 @@
   after_script:
     - rm -rf /srv/${FILES_HOST_NAME}/$CI_JOB_ID/
   artifacts:
+    name: "mesa_${CI_JOB_NAME}"
     when: always
     paths:
       - artifacts/
@@ -57,6 +58,7 @@
   dependencies:
     - meson-armhf
   needs:
+    - arm_build
     - meson-armhf
 
 .lava-test:arm64:
@@ -71,66 +73,101 @@
   dependencies:
     - meson-arm64
   needs:
+    - arm_build
     - meson-arm64
 
-panfrost-t720-test:arm64:
-  extends: .lava-test:arm64
+panfrost-t720-gles2:arm64:
+  extends:
+    - .lava-test:arm64
+    - .panfrost-rules
   variables:
     DEVICE_TYPE: sun50i-h6-pine-h64
     GPU_VERSION: panfrost-t720
+    ENV_VARS: "PAN_MESA_DEBUG=gles3 DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=T720"
     FILES_HOST_NAME: "mesa-ci-lava-files.freedesktop.org"
     FILES_HOST_URL: "https://mesa-ci-lava-files.freedesktop.org"
   tags:
     - mesa-ci-aarch64-lava-collabora
 
-panfrost-t760-test:armhf:
-  extends: .lava-test:armhf
+panfrost-t760-gles2:armhf:
+  extends:
+    - .lava-test:armhf
+    - .panfrost-rules
   variables:
     DEVICE_TYPE: rk3288-veyron-jaq
     GPU_VERSION: panfrost-t760
     BOOT_METHOD: depthcharge
     KERNEL_IMAGE_TYPE: ""
+    ENV_VARS: "PAN_MESA_DEBUG=gles3 DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=T760"
     FILES_HOST_NAME: "mesa-ci-lava-files.freedesktop.org"
     FILES_HOST_URL: "https://mesa-ci-lava-files.freedesktop.org"
   tags:
     - mesa-ci-aarch64-lava-collabora
 
-panfrost-t860-test:arm64:
-  extends: .lava-test:arm64
+panfrost-t860-gles2:arm64:
+  extends:
+    - .lava-test:arm64
+    - .panfrost-rules
   variables:
     DEVICE_TYPE: rk3399-gru-kevin
     GPU_VERSION: panfrost-t860
     BOOT_METHOD: depthcharge
     KERNEL_IMAGE_TYPE: ""
+    ENV_VARS: "PAN_MESA_DEBUG=gles3 DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=T860"
+    FILES_HOST_NAME: "mesa-ci-lava-files.freedesktop.org"
+    FILES_HOST_URL: "https://mesa-ci-lava-files.freedesktop.org"
+  tags:
+    - mesa-ci-aarch64-lava-collabora
+
+panfrost-t860-gles3:arm64:
+  extends:
+    - .lava-test:arm64
+    - .panfrost-rules
+  variables:
+    DEVICE_TYPE: rk3399-gru-kevin
+    GPU_VERSION: panfrost-t860
+    BOOT_METHOD: depthcharge
+    KERNEL_IMAGE_TYPE: ""
+    DEQP_VERSION: gles3
+    ENV_VARS: "PAN_MESA_DEBUG=gles3 DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=T860"
+    CI_NODE_INDEX: 1
+    CI_NODE_TOTAL: 5
     FILES_HOST_NAME: "mesa-ci-lava-files.freedesktop.org"
     FILES_HOST_URL: "https://mesa-ci-lava-files.freedesktop.org"
   tags:
     - mesa-ci-aarch64-lava-collabora
 
 .panfrost-t820-gles2:arm64:
-  extends: .lava-test:arm64
+  extends:
+    - .lava-test:arm64
+    - .panfrost-rules
   variables:
     DEVICE_TYPE: meson-gxm-khadas-vim2
     GPU_VERSION: panfrost-t820
     LAVA_TAGS: panfrost
+    ENV_VARS: "PAN_MESA_DEBUG=gles3 DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=T820"
   tags:
     - mesa-ci-aarch64-lava-baylibre
 
 .lima-mali400-test:armhf:
   parallel: 2
-  extends: .lava-test:armhf
+  extends:
+    - .lava-test:armhf
+    - .lima-rules
   variables:
     DEVICE_TYPE: sun8i-h3-libretech-all-h3-cc
     GPU_VERSION: lima
-    ENV_VARS: "DEQP_PARALLEL=3"
+    ENV_VARS: "DEQP_PARALLEL=3 DEQP_EXPECTED_RENDERER=Mali400"
   tags:
     - mesa-ci-aarch64-lava-baylibre
 
 .lima-mali450-test:arm64:
-  extends: .lava-test:arm64
+  extends:
+    - .lava-test:arm64
+    - .lima-rules
   variables:
     DEVICE_TYPE: meson-gxl-s905x-libretech-cc
     GPU_VERSION: lima
-    ENV_VARS: "DEQP_PARALLEL=6"
+    ENV_VARS: "DEQP_PARALLEL=6 DEQP_EXPECTED_RENDERER=Mali450"
   tags:
     - mesa-ci-aarch64-lava-baylibre

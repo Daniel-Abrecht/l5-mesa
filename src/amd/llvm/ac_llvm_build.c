@@ -4705,6 +4705,24 @@ ac_build_load_helper_invocation(struct ac_llvm_context *ctx)
 	return LLVMBuildSExt(ctx->builder, result, ctx->i32, "");
 }
 
+LLVMValueRef
+ac_build_is_helper_invocation(struct ac_llvm_context *ctx)
+{
+	if (!ctx->postponed_kill)
+		return ac_build_load_helper_invocation(ctx);
+
+	/* !(exact && postponed) */
+	LLVMValueRef exact = ac_build_intrinsic(ctx, "llvm.amdgcn.ps.live",
+						ctx->i1, NULL, 0,
+						AC_FUNC_ATTR_READNONE);
+
+	LLVMValueRef postponed = LLVMBuildLoad(ctx->builder, ctx->postponed_kill, "");
+	LLVMValueRef result = LLVMBuildAnd(ctx->builder, exact, postponed, "");
+
+	return LLVMBuildSelect(ctx->builder, result, ctx->i32_0,
+	                       LLVMConstInt(ctx->i32, 0xFFFFFFFF, false), "");
+}
+
 LLVMValueRef ac_build_call(struct ac_llvm_context *ctx, LLVMValueRef func,
 			   LLVMValueRef *args, unsigned num_args)
 {
@@ -4798,10 +4816,7 @@ void ac_build_sendmsg_gs_alloc_req(struct ac_llvm_context *ctx, LLVMValueRef wav
 	 * We always have to export at least 1 primitive.
 	 * Export a degenerate triangle using vertex 0 for all 3 vertices.
 	 */
-	if (prim_cnt == ctx->i32_0 &&
-	    (ctx->family == CHIP_NAVI10 ||
-	     ctx->family == CHIP_NAVI12 ||
-	     ctx->family == CHIP_NAVI14)) {
+	if (prim_cnt == ctx->i32_0 && ctx->chip_class == GFX10) {
 		assert(vtx_cnt == ctx->i32_0);
 		prim_cnt = ctx->i32_1;
 		vtx_cnt = ctx->i32_1;
@@ -4964,6 +4979,15 @@ ac_build_main(const struct ac_shader_args *args,
 	}
 
 	ctx->main_function = main_function;
+
+	if (LLVM_VERSION_MAJOR >= 11) {
+		/* Enable denormals for FP16 and FP64: */
+		LLVMAddTargetDependentFunctionAttr(main_function, "denormal-fp-math",
+						   "ieee,ieee");
+		/* Disable denormals for FP32: */
+		LLVMAddTargetDependentFunctionAttr(main_function, "denormal-fp-math-f32",
+						   "preserve-sign,preserve-sign");
+	}
 	return main_function;
 }
 

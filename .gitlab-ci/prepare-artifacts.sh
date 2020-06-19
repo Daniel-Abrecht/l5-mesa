@@ -25,6 +25,16 @@ find install -name \*.so -exec $STRIP {} \;
 cp VERSION install/
 cp -Rp .gitlab-ci/deqp* install/
 cp -Rp .gitlab-ci/piglit install/
+cp -Rp .gitlab-ci/traces.yml install/
+cp -Rp .gitlab-ci/tracie install/
+cp -Rp .gitlab-ci/tracie-runner-gl.sh install/
+cp -Rp .gitlab-ci/tracie-runner-vk.sh install/
+cp -Rp .gitlab-ci/fossils.yml install/
+cp -Rp .gitlab-ci/fossils install/
+cp -Rp .gitlab-ci/fossilize-runner.sh install/
+cp -Rp .gitlab-ci/deqp-runner.sh install/
+cp -Rp .gitlab-ci/deqp-*-fails.txt install/
+cp -Rp .gitlab-ci/deqp-*-skips.txt install/
 
 # Tar up the install dir so that symlinks and hardlinks aren't each
 # packed separately in the zip file.
@@ -33,7 +43,7 @@ tar -cf artifacts/install.tar install
 
 # If the container has LAVA stuff, prepare the artifacts for LAVA jobs
 if [ -d /lava-files ]; then
-        # Pass needed files to the test stage
-        cp $CI_PROJECT_DIR/.gitlab-ci/generate_lava.py artifacts/.
-        cp $CI_PROJECT_DIR/.gitlab-ci/lava-deqp.yml.jinja2 artifacts/.
+    # Pass needed files to the test stage
+    cp $CI_PROJECT_DIR/.gitlab-ci/generate_lava.py artifacts/.
+    cp $CI_PROJECT_DIR/.gitlab-ci/lava-deqp.yml.jinja2 artifacts/.
 fi

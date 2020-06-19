@@ -49,12 +49,14 @@ enum radeon_surf_mode {
     RADEON_SURF_MODE_2D = 3,
 };
 
-/* These are defined exactly like GB_TILE_MODEn.MICRO_TILE_MODE_NEW. */
+/* This describes D/S/Z/R swizzle modes.
+ * Defined in the GB_TILE_MODEn.MICRO_TILE_MODE_NEW order.
+ */
 enum radeon_micro_mode {
     RADEON_MICRO_MODE_DISPLAY = 0,
-    RADEON_MICRO_MODE_THIN = 1,
+    RADEON_MICRO_MODE_STANDARD = 1,
     RADEON_MICRO_MODE_DEPTH = 2,
-    RADEON_MICRO_MODE_ROTATED = 3, /* gfx10+: render target */
+    RADEON_MICRO_MODE_RENDER = 3, /* gfx9 and older: rotated */
 };
 
 /* the first 16 bits are reserved for libdrm_radeon, don't use them */
@@ -67,9 +69,11 @@ enum radeon_micro_mode {
 #define RADEON_SURF_DISABLE_DCC                 (1 << 22)
 #define RADEON_SURF_TC_COMPATIBLE_HTILE         (1 << 23)
 #define RADEON_SURF_IMPORTED                    (1 << 24)
-#define RADEON_SURF_OPTIMIZE_FOR_SPACE          (1 << 25)
+/* gap */
 #define RADEON_SURF_SHAREABLE                   (1 << 26)
 #define RADEON_SURF_NO_RENDER_TARGET            (1 << 27)
+/* Force a swizzle mode (gfx9+) or tile mode (gfx6-8).
+ * If this is not set, optimize for space. */
 #define RADEON_SURF_FORCE_SWIZZLE_MODE          (1 << 28)
 #define RADEON_SURF_NO_FMASK                    (1 << 29)
 #define RADEON_SURF_NO_HTILE                    (1 << 30)
@@ -135,6 +139,9 @@ struct gfx9_surf_flags {
 struct gfx9_surf_meta_flags {
     unsigned                    rb_aligned:1;   /* optimal for RBs */
     unsigned                    pipe_aligned:1; /* optimal for TC */
+    unsigned                    independent_64B_blocks:1;
+    unsigned                    independent_128B_blocks:1;
+    unsigned                    max_compressed_block_size:2;
 };
 
 struct gfx9_surf_layout {
