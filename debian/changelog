@@ -1,3 +1,24 @@
+mesa (20.1.5-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 10 Aug 2020 10:32:11 +0300
+
+mesa (20.1.4-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-ppc64el.patch: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 28 Jul 2020 15:59:19 +0300
+
+mesa (20.1.2-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #963677)
+  * mesa-vulkan-drivers: Add support for device-select-layer.
+  * control, rules: Enable valgrind where supported. (Closes: #890846)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 25 Jun 2020 10:24:29 +0300
+
 mesa (20.1.1-1pureos+librem5.1) UNRELEASED; urgency=medium
 
   * New upstream release.

@@ -245,6 +245,11 @@ DRI_CONF_OPT_BEGIN_B(vk_x11_strict_image_count, def) \
         DRI_CONF_DESC(en,gettext("Force the X11 WSI to create exactly the number of image specified by the application in VkSwapchainCreateInfoKHR::minImageCount")) \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_VK_X11_ENSURE_MIN_IMAGE_COUNT(def) \
+DRI_CONF_OPT_BEGIN_B(vk_x11_ensure_min_image_count, def) \
+        DRI_CONF_DESC(en,gettext("Force the X11 WSI to create at least the number of image specified by the driver in VkSurfaceCapabilitiesKHR::minImageCount")) \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_MESA_GLTHREAD(def) \
 DRI_CONF_OPT_BEGIN_B(mesa_glthread, def) \
         DRI_CONF_DESC(en,gettext("Enable offloading GL driver work to a separate thread")) \
@@ -420,4 +425,13 @@ DRI_CONF_OPT_END
 #define DRI_CONF_GLES_SAMPLES_PASSED_VALUE(def, minimum, maximum) \
 DRI_CONF_OPT_BEGIN_V(gles_samples_passed_value, def, minimum, maximum) \
         DRI_CONF_DESC(en,gettext("GL_SAMPLES_PASSED value when emulated by GL_ANY_SAMPLES_PASSED")) \
+DRI_CONF_OPT_END
+
+/**
+ * \brief RADV specific configuration options
+ */
+
+#define DRI_CONF_RADV_NO_DYNAMIC_BOUNDS(def) \
+DRI_CONF_OPT_BEGIN_B(radv_no_dynamic_bounds, def) \
+        DRI_CONF_DESC(en,gettext("Disabling bounds checking for dynamic buffer descriptors")) \
 DRI_CONF_OPT_END

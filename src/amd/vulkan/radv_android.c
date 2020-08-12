@@ -25,13 +25,13 @@
 #include <hardware/gralloc.h>
 #include <hardware/hardware.h>
 #include <hardware/hwvulkan.h>
-#include <vndk/hardware_buffer.h>
 #include <vulkan/vk_android_native_buffer.h>
 #include <vulkan/vk_icd.h>
 #include <libsync.h>
 
 #if ANDROID_API_LEVEL >= 26
 #include <hardware/gralloc1.h>
+#include <vndk/hardware_buffer.h>
 #endif
 #endif
 
@@ -396,6 +396,7 @@ radv_AcquireImageANDROID(
 		                                                 .flags = VK_SEMAPHORE_IMPORT_TEMPORARY_BIT,
 		                                                 .fd = semaphore_fd,
 		                                                 .semaphore = semaphore,
+		                                                 .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
 		                                            });
 	}
 
@@ -407,6 +408,7 @@ radv_AcquireImageANDROID(
 		                                         .flags = VK_FENCE_IMPORT_TEMPORARY_BIT,
 		                                         .fd = fence_fd,
 		                                         .fence = fence,
+		                                         .handleType = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
 		                                     });
 	}
 

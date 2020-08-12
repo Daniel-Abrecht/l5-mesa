@@ -542,6 +542,9 @@ radv_handle_per_app_options(struct radv_instance *instance,
 		} else if (!strcmp(name, "DOOMEternal")) {
 			/* Zero VRAM for Doom Eternal to fix rendering issues. */
 			instance->debug_flags |= RADV_DEBUG_ZERO_VRAM;
+		} else if (!strcmp(name, "Red Dead Redemption 2")) {
+			/* Work around a RDR2 game bug */
+			instance->debug_flags |= RADV_DEBUG_DISCARD_TO_DEMOTE;
 		}
 	}
 
@@ -551,8 +554,15 @@ radv_handle_per_app_options(struct radv_instance *instance,
 			 * rendering issues.
 			 */
 			instance->debug_flags |= RADV_DEBUG_ZERO_VRAM;
+		} else if (!strcmp(engine_name, "Quantic Dream Engine")) {
+			/* Fix various artifacts in Detroit: Become Human */
+			instance->debug_flags |= RADV_DEBUG_ZERO_VRAM |
+			                         RADV_DEBUG_DISCARD_TO_DEMOTE;
 		}
 	}
+
+	if (driQueryOptionb(&instance->dri_options, "radv_no_dynamic_bounds"))
+		instance->debug_flags |= RADV_DEBUG_NO_DYNAMIC_BOUNDS;
 }
 
 static int radv_get_instance_extension_index(const char *name)
@@ -570,6 +580,8 @@ DRI_CONF_BEGIN
 		DRI_CONF_ADAPTIVE_SYNC("true")
 		DRI_CONF_VK_X11_OVERRIDE_MIN_IMAGE_COUNT(0)
 		DRI_CONF_VK_X11_STRICT_IMAGE_COUNT("false")
+		DRI_CONF_VK_X11_ENSURE_MIN_IMAGE_COUNT("false")
+		DRI_CONF_RADV_NO_DYNAMIC_BOUNDS("false")
 	DRI_CONF_SECTION_END
 
 	DRI_CONF_SECTION_DEBUG
@@ -3126,8 +3138,8 @@ VkResult radv_CreateDevice(
 		switch (family) {
 		case RADV_QUEUE_GENERAL:
 			radeon_emit(device->empty_cs[family], PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
-			radeon_emit(device->empty_cs[family], CONTEXT_CONTROL_LOAD_ENABLE(1));
-			radeon_emit(device->empty_cs[family], CONTEXT_CONTROL_SHADOW_ENABLE(1));
+			radeon_emit(device->empty_cs[family], CC0_UPDATE_LOAD_ENABLES(1));
+			radeon_emit(device->empty_cs[family], CC1_UPDATE_SHADOW_ENABLES(1));
 			break;
 		case RADV_QUEUE_COMPUTE:
 			radeon_emit(device->empty_cs[family], PKT3(PKT3_NOP, 0, 0));
@@ -3958,6 +3970,8 @@ radv_get_preamble_cs(struct radv_queue *queue,
 
 	if (descriptor_bo != queue->descriptor_bo) {
 		uint32_t *map = (uint32_t*)queue->device->ws->buffer_map(descriptor_bo);
+		if (!map)
+			goto fail;
 
 		if (scratch_bo) {
 			uint64_t scratch_va = radv_buffer_get_va(scratch_bo);
@@ -6201,7 +6215,16 @@ radv_SignalSemaphore(VkDevice _device,
 		radv_timeline_trigger_waiters_locked(&part->timeline, &processing_list);
 		pthread_mutex_unlock(&part->timeline.mutex);
 
-		return radv_process_submissions(&processing_list);
+		VkResult result = radv_process_submissions(&processing_list);
+
+		/* This needs to happen after radv_process_submissions, so
+		 * that any submitted submissions that are now unblocked get
+		 * processed before we wake the application. This way we
+		 * ensure that any binary semaphores that are now unblocked
+		 * are usable by the application. */
+		pthread_cond_broadcast(&device->timeline_cond);
+
+		return result;
 	}
 	case RADV_SEMAPHORE_NONE:
 	case RADV_SEMAPHORE_SYNCOBJ:
@@ -6211,7 +6234,13 @@ radv_SignalSemaphore(VkDevice _device,
 	return VK_SUCCESS;
 }
 
-
+static void radv_destroy_event(struct radv_device *device,
+                               const VkAllocationCallbacks* pAllocator,
+                               struct radv_event *event)
+{
+	device->ws->buffer_destroy(event->bo);
+	vk_free2(&device->alloc, pAllocator, event);
+}
 
 VkResult radv_CreateEvent(
 	VkDevice                                    _device,
@@ -6237,6 +6266,10 @@ VkResult radv_CreateEvent(
 	}
 
 	event->map = (uint64_t*)device->ws->buffer_map(event->bo);
+	if (!event->map) {
+		radv_destroy_event(device, pAllocator, event);
+		return vk_error(device->instance, VK_ERROR_OUT_OF_DEVICE_MEMORY);
+	}
 
 	*pEvent = radv_event_to_handle(event);
 
@@ -6253,8 +6286,8 @@ void radv_DestroyEvent(
 
 	if (!event)
 		return;
-	device->ws->buffer_destroy(event->bo);
-	vk_free2(&device->alloc, pAllocator, event);
+
+	radv_destroy_event(device, pAllocator, event);
 }
 
 VkResult radv_GetEventStatus(
@@ -7528,7 +7561,7 @@ VkResult radv_GetFenceFdKHR(VkDevice _device,
 		ret = device->ws->export_syncobj_to_sync_file(device->ws, syncobj_handle, pFd);
 		if (!ret) {
 			if (fence->temp_syncobj) {
-				close (fence->temp_syncobj);
+				device->ws->destroy_syncobj(device->ws, fence->temp_syncobj);
 				fence->temp_syncobj = 0;
 			} else {
 				device->ws->reset_syncobj(device->ws, syncobj_handle);
