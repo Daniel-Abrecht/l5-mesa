@@ -1,0 +1,85 @@
+From 28fee18ff5685826ea353479c33aae60bc75913f Mon Sep 17 00:00:00 2001
+From: Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>
+Date: Thu, 13 Aug 2020 20:52:58 +0200
+Subject: [PATCH] Revert "etnaviv: add anisotropic filter support"
+
+This reverts commit 7aaa0e59086fa2bf9c5fa7db2774cb2aa32f95b9.
+---
+ src/gallium/drivers/etnaviv/etnaviv_texture_desc.c  | 4 ----
+ src/gallium/drivers/etnaviv/etnaviv_texture_state.c | 4 +---
+ src/gallium/drivers/etnaviv/etnaviv_translate.h     | 1 +
+ 3 files changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_texture_desc.c b/src/gallium/drivers/etnaviv/etnaviv_texture_desc.c
+index 25efcd3dee3..c5aa6691a4f 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_texture_desc.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_texture_desc.c
+@@ -47,7 +47,6 @@ struct etna_sampler_state_desc {
+    uint32_t SAMP_CTRL1;
+    uint32_t SAMP_LOD_MINMAX;
+    uint32_t SAMP_LOD_BIAS;
+-   uint32_t SAMP_ANISOTROPY;
+ };
+ 
+ static inline struct etna_sampler_state_desc *
+@@ -78,7 +77,6 @@ etna_create_sampler_state_desc(struct pipe_context *pipe,
+                           const struct pipe_sampler_state *ss)
+ {
+    struct etna_sampler_state_desc *cs = CALLOC_STRUCT(etna_sampler_state_desc);
+-   const bool ansio = ss->max_anisotropy > 1;
+ 
+    if (!cs)
+       return NULL;
+@@ -109,7 +107,6 @@ etna_create_sampler_state_desc(struct pipe_context *pipe,
+    cs->SAMP_LOD_BIAS =
+       VIVS_NTE_DESCRIPTOR_SAMP_LOD_BIAS_BIAS(etna_float_to_fixp88(ss->lod_bias)) |
+       COND(ss->lod_bias != 0.0, VIVS_NTE_DESCRIPTOR_SAMP_LOD_BIAS_ENABLE);
+-   cs->SAMP_ANISOTROPY = COND(ansio, etna_log2_fixp88(ss->max_anisotropy));
+ 
+    return cs;
+ }
+@@ -302,7 +299,6 @@ etna_emit_texture_desc(struct etna_context *ctx)
+             etna_set_state(stream, VIVS_NTE_DESCRIPTOR_SAMP_CTRL1(x), ss->SAMP_CTRL1 | sv->SAMP_CTRL1);
+             etna_set_state(stream, VIVS_NTE_DESCRIPTOR_SAMP_LOD_MINMAX(x), ss->SAMP_LOD_MINMAX);
+             etna_set_state(stream, VIVS_NTE_DESCRIPTOR_SAMP_LOD_BIAS(x), ss->SAMP_LOD_BIAS);
+-            etna_set_state(stream, VIVS_NTE_DESCRIPTOR_SAMP_ANISOTROPY(x), ss->SAMP_ANISOTROPY);
+          }
+       }
+    }
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_texture_state.c b/src/gallium/drivers/etnaviv/etnaviv_texture_state.c
+index 4c11b114ac0..e25d0c7582c 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_texture_state.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_texture_state.c
+@@ -88,7 +88,6 @@ etna_create_sampler_state_state(struct pipe_context *pipe,
+    struct etna_sampler_state *cs = CALLOC_STRUCT(etna_sampler_state);
+    struct etna_context *ctx = etna_context(pipe);
+    struct etna_screen *screen = ctx->screen;
+-   const bool ansio = ss->max_anisotropy > 1;
+ 
+    if (!cs)
+       return NULL;
+@@ -98,8 +97,7 @@ etna_create_sampler_state_state(struct pipe_context *pipe,
+       VIVS_TE_SAMPLER_CONFIG0_VWRAP(translate_texture_wrapmode(ss->wrap_t)) |
+       VIVS_TE_SAMPLER_CONFIG0_MIN(translate_texture_filter(ss->min_img_filter)) |
+       VIVS_TE_SAMPLER_CONFIG0_MIP(translate_texture_mipfilter(ss->min_mip_filter)) |
+-      VIVS_TE_SAMPLER_CONFIG0_MAG(translate_texture_filter(ss->mag_img_filter)) |
+-      VIVS_TE_SAMPLER_CONFIG0_ANISOTROPY(COND(ansio, etna_log2_fixp55(ss->max_anisotropy)));
++      VIVS_TE_SAMPLER_CONFIG0_MAG(translate_texture_filter(ss->mag_img_filter));
+ 
+    /* ROUND_UV improves precision - but not compatible with NEAREST filter */
+    if (ss->min_img_filter != PIPE_TEX_FILTER_NEAREST &&
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_translate.h b/src/gallium/drivers/etnaviv/etnaviv_translate.h
+index 758a682d084..271bd4a8648 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_translate.h
++++ b/src/gallium/drivers/etnaviv/etnaviv_translate.h
+@@ -207,6 +207,7 @@ translate_texture_filter(unsigned filter)
+       return TEXTURE_FILTER_NEAREST;
+    case PIPE_TEX_FILTER_LINEAR:
+       return TEXTURE_FILTER_LINEAR;
++   /* What about anisotropic? */
+    default:
+       DBG("Unhandled texture filter: %i", filter);
+       return ETNA_NO_MATCH;
+-- 
+2.20.1
+

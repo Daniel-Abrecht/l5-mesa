@@ -4,3 +4,4 @@ path_max.diff
 src_glx_dri_common.h.diff
 etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
 0001-etnaviv-Enable-NIR-compiler-by-default.patch
+0001-Revert-etnaviv-add-anisotropic-filter-support.patch
