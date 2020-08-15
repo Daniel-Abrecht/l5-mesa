@@ -1,0 +1,28 @@
+include:
+ - 'https://source.puri.sm/Librem5/librem5-ci/raw/master/librem5-pipeline-definitions.yml'
+
+stages:
+ - package
+ - test-package
+
+variables:
+  L5_DOCKER_IMAGE: debian:buster
+
+package-debian-buster:arm64:
+  tags:
+    - librem5:arm64
+  extends: .l5-build-debian-package
+
+autopkgtest-debian-buster-package:arm64:
+  tags:
+    - librem5:arm64
+  dependencies:
+    - package-debian-buster:arm64
+  extends: .l5-autopkgtest-debian-package
+
+lintian-debian-buster-package:arm64:
+  tags:
+    - librem5:arm64
+  dependencies:
+    - package-debian-buster:arm64
+  extends: .l5-lintian-debian-package
