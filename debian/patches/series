@@ -1,8 +1,8 @@
 07_gallium-fix-build-failure-on-powerpcspe.diff
-etnaviv-drm-update-DRM-interface-header-to-include-softpi.patch
-etnaviv-drm-add-softpin-interface.patch
-etnaviv-check-for-softpin-availability-on-Halti5-devices.patch
-etnaviv-GC7000-Texture-descriptors.patch
-etnaviv-add-linear-texture-support-on-GC7000.patch
-etnaviv-GC7000-flush-TX-descriptor-and-instruction-cache.patch
-create-gles-pc-files-with-old-glvnd.diff
+fix-python-shebang.diff
+path_max.diff
+src_glx_dri_common.h.diff
+etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
+0001-etnaviv-Enable-NIR-compiler-by-default.patch
+0001-Revert-etnaviv-add-anisotropic-filter-support.patch
+94788a3a29dfed1e5d4fd5cfb91a9b67b0b013cc.patch

@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "pipe/p_state.h"
@@ -248,6 +248,16 @@ static const enum virgl_formats virgl_formats_conv_table[PIPE_FORMAT_COUNT] = {
    CONV_FORMAT(R10G10B10X2_UNORM)
    CONV_FORMAT(A4B4G4R4_UNORM)
    CONV_FORMAT(R8_SRGB)
+   CONV_FORMAT(ETC2_RGB8)
+   CONV_FORMAT(ETC2_SRGB8)
+   CONV_FORMAT(ETC2_RGB8A1)
+   CONV_FORMAT(ETC2_SRGB8A1)
+   CONV_FORMAT(ETC2_RGBA8)
+   CONV_FORMAT(ETC2_SRGBA8)
+   CONV_FORMAT(ETC2_R11_UNORM)
+   CONV_FORMAT(ETC2_R11_SNORM)
+   CONV_FORMAT(ETC2_RG11_UNORM)
+   CONV_FORMAT(ETC2_RG11_SNORM)
 };
 
 enum virgl_formats pipe_to_virgl_format(enum pipe_format format)
@@ -492,12 +502,13 @@ int virgl_encode_shader_state(struct virgl_context *ctx,
          if (virgl_debug & VIRGL_DEBUG_VERBOSE)
             debug_printf("Failed to translate shader in available space - trying again\n");
          old_size = str_total_size;
-         str_total_size = 65536 * ++retry_size;
+         str_total_size = 65536 * retry_size;
+         retry_size *= 2;
          str = REALLOC(str, old_size, str_total_size);
          if (!str)
             return -1;
       }
-   } while (bret == false && retry_size < 10);
+   } while (bret == false && retry_size < 1024);
 
    if (bret == false)
       return -1;
@@ -879,7 +890,12 @@ int virgl_encode_sampler_view(struct virgl_context *ctx,
       virgl_encoder_write_dword(ctx->cbuf, state->u.buf.offset / elem_size);
       virgl_encoder_write_dword(ctx->cbuf, (state->u.buf.offset + state->u.buf.size) / elem_size - 1);
    } else {
-      virgl_encoder_write_dword(ctx->cbuf, state->u.tex.first_layer | state->u.tex.last_layer << 16);
+      if (res->metadata.plane) {
+         debug_assert(state->u.tex.first_layer == 0 && state->u.tex.last_layer == 0);
+         virgl_encoder_write_dword(ctx->cbuf, res->metadata.plane);
+      } else {
+         virgl_encoder_write_dword(ctx->cbuf, state->u.tex.first_layer | state->u.tex.last_layer << 16);
+      }
       virgl_encoder_write_dword(ctx->cbuf, state->u.tex.first_level | state->u.tex.last_level << 8);
    }
    tmp = VIRGL_OBJ_SAMPLER_VIEW_SWIZZLE_R(state->swizzle_r) |
@@ -1213,7 +1229,7 @@ int virgl_encode_set_shader_buffers(struct virgl_context *ctx,
          virgl_encoder_write_dword(ctx->cbuf, buffers[i].buffer_size);
          virgl_encoder_write_res(ctx, res);
 
-         util_range_add(&res->valid_buffer_range, buffers[i].buffer_offset,
+         util_range_add(&res->u.b, &res->valid_buffer_range, buffers[i].buffer_offset,
                buffers[i].buffer_offset + buffers[i].buffer_size);
          virgl_resource_dirty(res, 0);
       } else {
@@ -1240,7 +1256,7 @@ int virgl_encode_set_hw_atomic_buffers(struct virgl_context *ctx,
          virgl_encoder_write_dword(ctx->cbuf, buffers[i].buffer_size);
          virgl_encoder_write_res(ctx, res);
 
-         util_range_add(&res->valid_buffer_range, buffers[i].buffer_offset,
+         util_range_add(&res->u.b, &res->valid_buffer_range, buffers[i].buffer_offset,
                buffers[i].buffer_offset + buffers[i].buffer_size);
          virgl_resource_dirty(res, 0);
       } else {
@@ -1272,7 +1288,7 @@ int virgl_encode_set_shader_images(struct virgl_context *ctx,
          virgl_encoder_write_res(ctx, res);
 
          if (res->u.b.target == PIPE_BUFFER) {
-            util_range_add(&res->valid_buffer_range, images[i].u.buf.offset,
+            util_range_add(&res->u.b, &res->valid_buffer_range, images[i].u.buf.offset,
                   images[i].u.buf.offset + images[i].u.buf.size);
          }
          virgl_resource_dirty(res, images[i].u.tex.level);

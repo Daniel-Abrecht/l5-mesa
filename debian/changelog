@@ -1,3 +1,296 @@
+mesa (20.1.5-1pureos+librem5.1) UNRELEASED; urgency=medium
+
+  * etnaviv: Enable NIR compiler by default
+  * etnaviv: Revert anisotropic filter support
+  * Update the etnaviv early-z rejection patch
+  * Add "kmsro: Extend to include imx-dcss" patch
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Thu, 13 Aug 2020 00:50:56 +0200
+
+mesa (20.1.5-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 10 Aug 2020 10:32:11 +0300
+
+mesa (20.1.4-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-ppc64el.patch: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 28 Jul 2020 15:59:19 +0300
+
+mesa (20.1.2-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #963677)
+  * mesa-vulkan-drivers: Add support for device-select-layer.
+  * control, rules: Enable valgrind where supported. (Closes: #890846)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 25 Jun 2020 10:24:29 +0300
+
+mesa (20.1.1-1pureos+librem5.1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Fri, 19 Jun 2020 22:50:26 +0200
+
+mesa (20.1.1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 11 Jun 2020 11:06:50 +0300
+
+mesa (20.1.0-1) experimental; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 28 May 2020 13:14:52 +0300
+
+mesa (20.1.0~rc4-1) experimental; urgency=medium
+
+  * New upstream snapshot.
+  * fix-build-with-llvm-10.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 22 May 2020 09:17:06 +0300
+
+mesa (20.1.0~rc1-1) experimental; urgency=medium
+
+  * New upstream snapshot.
+  * fix-build-with-llvm-10.diff: Refreshed.
+  * signing-key: Add key from Eric Engeström.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 05 May 2020 12:47:17 +0300
+
+mesa (20.0.7-1pureos+librem5.1) UNRELEASED; urgency=medium
+
+  * Update to Debian's 20.0.7-1
+  * Add early-z rejection fix patch for etnaviv
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Fri, 19 Jun 2020 22:42:36 +0200
+
+mesa (20.0.7-1) unstable; urgency=medium
+
+  * New upstream release.
+  * src_glx_dri_common.h.diff: A new attempt to fix hurd ftbfs. (Closes:
+    #960197)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 22 May 2020 08:36:18 +0300
+
+mesa (20.0.6-3) unstable; urgency=medium
+
+  * src_glx_dri_common.h.diff: Dropped, breaks the build.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 08 May 2020 12:44:12 +0300
+
+mesa (20.0.6-2) unstable; urgency=medium
+
+  [ Timo Aaltonen ]
+  * control: Bump libdrm-dev build-dep.
+
+  [ Svante Signell ]
+  * src_glx_dri_common.h.diff: Fix build on Hurd. (Closes: #959975)
+
+  [ Frédéric Bonnard ]
+  * Fix ppc64el FTBFS. (Closes: #959943)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 08 May 2020 11:00:10 +0300
+
+mesa (20.0.6-1) unstable; urgency=medium
+
+  * New upstream release.
+  * patches: Drop upstreamed patches, refresh llvm-10 build-fix.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 05 May 2020 10:37:18 +0300
+
+mesa (20.0.4-2) unstable; urgency=medium
+
+  * fix-build-with-llvm-10.diff: Add a patch to fix build with Polly,
+    and build with llvm-10 again. (Closes: #956004)
+  * iris-drop-cache-coherent-cpu-mapping.diff: Fix corruption with iris
+    (Closes: #954311) (LP: #1864274)
+  * gallium-fix-bob-compute-shaders.diff: Fix vaapi with bob
+    deinterlacing. (LP: #1867188)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 15 Apr 2020 10:16:24 +0300
+
+mesa (20.0.4-1) unstable; urgency=medium
+
+  * New upstream release.
+  * path_max.diff, libglx-mesa0.symbols.hurd: Fix build on Hurd.
+    (Closes: #955351)
+  * upstream/signing-key.asc: Added Eric Engestrom's key.
+  * source/local-options: Update extend-diff-ignore.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Sun, 05 Apr 2020 23:39:55 +0300
+
+mesa (20.0.2-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Update to Debian's 20.0.2-1
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Mon, 22 Mar 2020 12:52:45 +0100
+
+mesa (20.0.2-1) unstable; urgency=medium
+
+  * New upstream release.
+  * control: Revert to building with llvm/clang-9, until it builds with
+    10.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Mar 2020 16:03:53 +0200
+
+mesa (20.0.1-2) experimental; urgency=medium
+
+  * control: Fix clang build-dep to actually use libclang-10-dev.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Mar 2020 23:20:30 +0200
+
+mesa (20.0.1-1) experimental; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Mar 2020 17:40:08 +0200
+
+mesa (20.0.0-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Update to Debian's 20.0.0-1
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Fri, 28 Feb 2020 00:09:08 +0100
+
+mesa (20.0.0-1) experimental; urgency=medium
+
+  * New upstream release.
+  * control: Use debhelper-compat, bump to 12.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 20 Feb 2020 10:46:06 +0200
+
+mesa (20.0.0~rc3-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Rebase on top of Debian's 20.0.0~rc3-1
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Fri, 14 Feb 2020 16:28:15 +0100
+
+mesa (20.0.0~rc3-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * rules: Fix dh_auto_test accepting failure.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 14 Feb 2020 14:07:05 +0200
+
+mesa (20.0.0~rc2-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * rules: Make running tests non-fatal, until they're actually expected
+    to pass on each arch.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 10 Feb 2020 15:02:10 +0200
+
+mesa (20.0.0~rc1-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * control: Add libzstd-dev to build-depends for zstd compressed shader
+    cache support.
+  * rules, fix-python-shebang.diff: Enable tests again to see where we
+    are now.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 04 Feb 2020 15:46:02 +0200
+
+mesa (20.0.0~git20200129-1) experimental; urgency=medium
+
+  * New upstream snapshot.
+  * mesa-vulkan-drivers.install: Include overlay control script.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 29 Jan 2020 09:29:20 +0200
+
+mesa (19.3.3-1pureos+librem5.1) amber-phone; urgency=medium
+
+  * Rebase on top of Debian's 19.3.3-1
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Thu, 13 Feb 2020 22:57:39 +0100
+
+mesa (19.3.3-1) unstable; urgency=medium
+
+  * New upstream release.
+  * rules: Build zink on x86.
+  * control: Add libglvnd-dev to libegl1-mesa-dev/libgles2-mesa-
+    dev/libgl1-mesa-dev Depends to ease the transition. (Closes: #949677)
+  * drisw-fix-depth-for-ximage.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 28 Jan 2020 21:45:02 +0200
+
+mesa (19.3.2-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 15 Jan 2020 14:55:29 +0200
+
+mesa (19.3.1-4) unstable; urgency=medium
+
+  [ Julien Cristau ]
+  * Ensure strict dependencies on libglapi-mesa (closes: #947813).
+
+  [ Timo Aaltonen ]
+  * control: Add libgl{,x}-dev to mesa-common-dev Depends. (Closes:
+    #947392)
+  * drisw-fix-depth-for-ximage.diff: Fix sw driver rgbBits/depth calculation.
+    (Closes: #947196)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 08 Jan 2020 11:38:56 +0200
+
+mesa (19.3.1-3) unstable; urgency=medium
+
+  * control, rules: Actually build radv on mipsel, drop mips from
+    everywhere since it's not an arch anymore. (Closes: #947310)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 25 Dec 2019 22:05:01 +0200
+
+mesa (19.3.1-2) unstable; urgency=medium
+
+  * rules: Build radv on mips/mipsel again.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Dec 2019 23:17:58 +0200
+
+mesa (19.3.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-radv-secure-compile.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Dec 2019 16:45:25 +0200
+
+mesa (19.3.0-1) experimental; urgency=medium
+
+  * New upstream release.
+  * fix-radv-secure-compile.diff: Fix radv build where __NR__newselect
+    isn't defined.
+  * rules: Restore radv build on non-x86 archs.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 13 Dec 2019 01:39:02 +0200
+
+mesa (19.3.0~rc6-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * control, rules: Don't build radv on non-x86.
+  * Don't install EGL/GL/GLES headers or pkg-config files, they're
+    shipped by libglvnd 1.3.0 now. Make old -dev packages transitional,
+    except libegl1-mesa-dev which still has two mesa specific headers.
+  * generate-pc-files-for-gles-and-gles2.diff: Dropped, not needed anymore.
+  * rules: Update clean target.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 09 Dec 2019 13:29:49 +0200
+
+mesa (19.3.0~rc5-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+  * generate-pc-files-for-gles-and-gles2.diff: This is needed until we
+    have glvnd 1.2 in the archive.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 29 Nov 2019 21:56:04 +0200
+
+mesa (19.2.6-1) unstable; urgency=medium
+
+  * New upstream release.
+  * create-gles-pc-files-with-old-glvnd.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 29 Nov 2019 21:08:25 +0200
+
 mesa (19.2.4-1pureos+librem5.1) amber-phone; urgency=medium
 
   * Rebase on top of Debian's 19.2.4-1

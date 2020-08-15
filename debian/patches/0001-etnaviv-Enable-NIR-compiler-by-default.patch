@@ -1,0 +1,25 @@
+From c9ae7249a6e47959cdc8e47f2afe257c1a6cf0b0 Mon Sep 17 00:00:00 2001
+From: Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>
+Date: Thu, 13 Aug 2020 06:36:19 +0200
+Subject: [PATCH] etnaviv: Enable NIR compiler by default
+
+---
+ src/gallium/drivers/etnaviv/etnaviv_screen.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_screen.c b/src/gallium/drivers/etnaviv/etnaviv_screen.c
+index cc6affe641e..b72e04e1661 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_screen.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_screen.c
+@@ -77,7 +77,7 @@ static const struct debug_named_value debug_options[] = {
+    DEBUG_NAMED_VALUE_END
+ };
+ 
+-DEBUG_GET_ONCE_FLAGS_OPTION(etna_mesa_debug, "ETNA_MESA_DEBUG", debug_options, 0)
++DEBUG_GET_ONCE_FLAGS_OPTION(etna_mesa_debug, "ETNA_MESA_DEBUG", debug_options, ETNA_DBG_NIR)
+ int etna_mesa_debug = 0;
+ 
+ static void
+-- 
+2.28.0
+

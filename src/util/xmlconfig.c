@@ -43,13 +43,25 @@
 #include <dirent.h>
 #include <fnmatch.h>
 #include <regex.h>
+#include "strndup.h"
 #include "xmlconfig.h"
 #include "u_process.h"
+#include "os_file.h"
 
 /* For systems like Hurd */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
+
+static bool
+be_verbose(void)
+{
+   const char *s = getenv("MESA_DEBUG");
+   if (!s)
+      return true;
+
+   return strstr(s, "silent") == NULL;
+}
 
 /** \brief Find an option in an option cache with the name as key */
 static uint32_t
@@ -547,9 +559,11 @@ parseOptInfoAttr(struct OptInfoData *data, const XML_Char **attr)
     defaultVal = getenv (cache->info[opt].name);
     if (defaultVal != NULL) {
       /* don't use XML_WARNING, we want the user to see this! */
-        fprintf (stderr,
-                 "ATTENTION: default value of option %s overridden by environment.\n",
-                 cache->info[opt].name);
+        if (be_verbose()) {
+            fprintf(stderr,
+                    "ATTENTION: default value of option %s overridden by environment.\n",
+                    cache->info[opt].name);
+        }
     } else
         defaultVal = attrVal[OA_DEFAULT];
     if (!parseValue (&cache->values[opt], cache->info[opt].type, defaultVal))
@@ -767,13 +781,40 @@ parseAppAttr(struct OptConfData *data, const XML_Char **attr)
 {
     uint32_t i;
     const XML_Char *exec = NULL;
+    const XML_Char *sha1 = NULL;
     for (i = 0; attr[i]; i += 2) {
         if (!strcmp (attr[i], "name")) /* not needed here */;
         else if (!strcmp (attr[i], "executable")) exec = attr[i+1];
+        else if (!strcmp (attr[i], "sha1")) sha1 = attr[i+1];
         else XML_WARNING("unknown application attribute: %s.", attr[i]);
     }
-    if (exec && strcmp (exec, data->execName))
+    if (exec && strcmp (exec, data->execName)) {
         data->ignoringApp = data->inApp;
+    } else if (sha1) {
+        /* SHA1_DIGEST_STRING_LENGTH includes terminating null byte */
+        if (strlen(sha1) != (SHA1_DIGEST_STRING_LENGTH - 1)) {
+            XML_WARNING("Incorrect sha1 application attribute");
+            data->ignoringApp = data->inApp;
+        } else {
+            size_t len;
+            char* content;
+            char path[PATH_MAX];
+            if (util_get_process_exec_path(path, ARRAY_SIZE(path)) > 0 &&
+                (content = os_read_file(path, &len))) {
+                uint8_t sha1x[SHA1_DIGEST_LENGTH];
+                char sha1s[SHA1_DIGEST_STRING_LENGTH];
+                _mesa_sha1_compute(content, len, sha1x);
+                _mesa_sha1_format((char*) sha1s, sha1x);
+                free(content);
+
+                if (strcmp(sha1, sha1s)) {
+                    data->ignoringApp = data->inApp;
+                }
+            } else {
+                data->ignoringApp = data->inApp;
+            }
+        }
+    }
 }
 
 /** \brief Parse attributes of an application element. */
@@ -830,11 +871,14 @@ parseOptConfAttr(struct OptConfData *data, const XML_Char **attr)
             /* don't use XML_WARNING, drirc defines options for all drivers,
              * but not all drivers support them */
             return;
-        else if (getenv (cache->info[opt].name))
+        else if (getenv (cache->info[opt].name)) {
           /* don't use XML_WARNING, we want the user to see this! */
-            fprintf (stderr, "ATTENTION: option value of option %s ignored.\n",
-                     cache->info[opt].name);
-        else if (!parseValue (&cache->values[opt], cache->info[opt].type, value))
+            if (be_verbose()) {
+                fprintf(stderr,
+                        "ATTENTION: option value of option %s ignored.\n",
+                        cache->info[opt].name);
+            }
+        } else if (!parseValue (&cache->values[opt], cache->info[opt].type, value))
             XML_WARNING ("illegal option value: %s.", value);
     }
 }

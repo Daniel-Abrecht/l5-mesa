@@ -182,6 +182,8 @@ struct st_egl_image
 
    unsigned level;
    unsigned layer;
+   /* GL internal format. */
+   unsigned internalformat;
 };
 
 /**
@@ -219,6 +221,7 @@ struct st_config_options
 {
    bool disable_blend_func_extended;
    bool disable_glsl_line_continuations;
+   bool disable_arb_gpu_shader5;
    bool force_glsl_extensions_warn;
    unsigned force_glsl_version;
    bool allow_glsl_extension_directive_midshader;
@@ -227,9 +230,12 @@ struct st_config_options
    bool allow_glsl_builtin_variable_redeclaration;
    bool allow_higher_compat_version;
    bool glsl_zero_init;
+   bool vs_position_always_invariant;
    bool force_glsl_abs_sqrt;
    bool allow_glsl_cross_stage_interpolation_mismatch;
    bool allow_glsl_layout_qualifier_on_function_parameters;
+   bool allow_draw_out_of_order;
+   bool force_integer_tex_nearest;
    char *force_gl_vendor;
    unsigned char config_options_sha1[20];
 };
@@ -387,7 +393,9 @@ struct st_context_iface
     * Flush all drawing from context to the pipe also flushes the pipe.
     */
    void (*flush)(struct st_context_iface *stctxi, unsigned flags,
-                 struct pipe_fence_handle **fence);
+                 struct pipe_fence_handle **fence,
+                 void (*notify_before_flush_cb) (void*),
+                 void* notify_before_flush_cb_args);
 
    /**
     * Replace the texture image of a texture object at the specified level.
