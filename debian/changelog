@@ -1,11 +1,11 @@
-mesa (20.1.5-1pureos+librem5.1) UNRELEASED; urgency=medium
+mesa (20.1.5-1pureos+librem5.1) amber-phone; urgency=medium
 
   * etnaviv: Enable NIR compiler by default
   * etnaviv: Revert anisotropic filter support
   * Update the etnaviv early-z rejection patch
   * Add "kmsro: Extend to include imx-dcss" patch
 
- -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Thu, 13 Aug 2020 00:50:56 +0200
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Wed, 19 Aug 2020 02:04:54 +0200
 
 mesa (20.1.5-1) unstable; urgency=medium
 
