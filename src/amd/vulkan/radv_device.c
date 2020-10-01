@@ -582,6 +582,7 @@ DRI_CONF_BEGIN
 		DRI_CONF_VK_X11_STRICT_IMAGE_COUNT("false")
 		DRI_CONF_VK_X11_ENSURE_MIN_IMAGE_COUNT("false")
 		DRI_CONF_RADV_NO_DYNAMIC_BOUNDS("false")
+		DRI_CONF_RADV_OVERRIDE_UNIFORM_OFFSET_ALIGNMENT(0)
 	DRI_CONF_SECTION_END
 
 	DRI_CONF_SECTION_DEBUG
@@ -595,6 +596,8 @@ static void  radv_init_dri_options(struct radv_instance *instance)
 	driParseConfigFiles(&instance->dri_options,
 	                    &instance->available_dri_options,
 	                    0, "radv", NULL,
+	                    instance->applicationName,
+	                    instance->applicationVersion,
 	                    instance->engineName,
 	                    instance->engineVersion);
 }
@@ -619,9 +622,13 @@ VkResult radv_CreateInstance(
 
 	const char *engine_name = NULL;
 	uint32_t engine_version = 0;
+	const char *application_name = NULL;
+	uint32_t application_version = 0;
 	if (pCreateInfo->pApplicationInfo) {
 		engine_name = pCreateInfo->pApplicationInfo->pEngineName;
 		engine_version = pCreateInfo->pApplicationInfo->engineVersion;
+		application_name = pCreateInfo->pApplicationInfo->pApplicationName;
+		application_version = pCreateInfo->pApplicationInfo->applicationVersion;
 	}
 
 	instance = vk_zalloc2(&default_alloc, pAllocator, sizeof(*instance), 8,
@@ -726,6 +733,9 @@ VkResult radv_CreateInstance(
 	instance->engineName = vk_strdup(&instance->alloc, engine_name,
 					 VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
 	instance->engineVersion = engine_version;
+	instance->applicationName = vk_strdup(&instance->alloc, application_name,
+					 VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+	instance->applicationVersion = application_version;
 
 	glsl_type_singleton_init_or_ref();
 
@@ -753,6 +763,7 @@ void radv_DestroyInstance(
 	}
 
 	vk_free(&instance->alloc, instance->engineName);
+	vk_free(&instance->alloc, instance->applicationName);
 
 	VG(VALGRIND_DESTROY_MEMPOOL(instance));
 
@@ -1308,6 +1319,21 @@ radv_max_descriptor_set_size()
 	           64 /* storage image */);
 }
 
+static uint32_t
+radv_uniform_buffer_offset_alignment(const struct radv_physical_device *pdevice)
+{
+	uint32_t uniform_offset_alignment = driQueryOptioni(&pdevice->instance->dri_options,
+	                                                   "radv_override_uniform_offset_alignment");
+	if (!util_is_power_of_two_or_zero(uniform_offset_alignment)) {
+		fprintf(stderr, "ERROR: invalid radv_override_uniform_offset_alignment setting %d:"
+		                "not a power of two\n", uniform_offset_alignment);
+		uniform_offset_alignment = 0;
+	}
+
+	/* Take at least the hardware limit. */
+	return MAX2(uniform_offset_alignment, 4);
+}
+
 void radv_GetPhysicalDeviceProperties(
 	VkPhysicalDevice                            physicalDevice,
 	VkPhysicalDeviceProperties*                 pProperties)
@@ -1390,7 +1416,7 @@ void radv_GetPhysicalDeviceProperties(
 		.viewportSubPixelBits                     = 8,
 		.minMemoryMapAlignment                    = 4096, /* A page */
 		.minTexelBufferOffsetAlignment            = 4,
-		.minUniformBufferOffsetAlignment          = 4,
+		.minUniformBufferOffsetAlignment          = radv_uniform_buffer_offset_alignment(pdevice),
 		.minStorageBufferOffsetAlignment          = 4,
 		.minTexelOffset                           = -32,
 		.maxTexelOffset                           = 31,
@@ -4610,6 +4636,12 @@ radv_queue_enqueue_submission(struct radv_deferred_queue_submission *submission,
 	 * submitted, but if the queue was empty, we decrement ourselves as there is no previous
 	 * submission. */
 	uint32_t decrement = submission->wait_semaphore_count - wait_cnt + (is_first ? 1 : 0);
+
+	/* if decrement is zero, then we don't have a refcounted reference to the
+	 * submission anymore, so it is not safe to access the submission. */
+	if (!decrement)
+		return;
+
 	if (__atomic_sub_fetch(&submission->submission_wait_count, decrement, __ATOMIC_ACQ_REL) == 0) {
 		list_addtail(&submission->processing_list, processing_list);
 	}
@@ -5205,6 +5237,26 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 			goto fail;
 		} else {
 			close(import_info->fd);
+		}
+
+		if (mem->image && mem->image->plane_count == 1 &&
+		    !vk_format_is_depth_or_stencil(mem->image->vk_format)) {
+			struct radeon_bo_metadata metadata;
+			device->ws->buffer_get_metadata(mem->bo, &metadata);
+
+			struct radv_image_create_info create_info = {
+				.no_metadata_planes = true,
+				.bo_metadata = &metadata
+			};
+
+			/* This gives a basic ability to import radeonsi images
+			 * that don't have DCC. This is not guaranteed by any
+			 * spec and can be removed after we support modifiers. */
+			result = radv_image_create_layout(device, create_info, mem->image);
+			if (result != VK_SUCCESS) {
+				device->ws->buffer_destroy(mem->bo);
+				goto fail;
+			}
 		}
 	} else if (host_ptr_info) {
 		assert(host_ptr_info->handleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT);
@@ -7654,7 +7706,9 @@ radv_GetDeviceGroupPeerMemoryFeatures(
 static const VkTimeDomainEXT radv_time_domains[] = {
 	VK_TIME_DOMAIN_DEVICE_EXT,
 	VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT,
+#ifdef CLOCK_MONOTONIC_RAW
 	VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT,
+#endif
 };
 
 VkResult radv_GetPhysicalDeviceCalibrateableTimeDomainsEXT(
@@ -7681,8 +7735,10 @@ radv_clock_gettime(clockid_t clock_id)
 	int ret;
 
 	ret = clock_gettime(clock_id, &current);
+#ifdef CLOCK_MONOTONIC_RAW
 	if (ret < 0 && clock_id == CLOCK_MONOTONIC_RAW)
 		ret = clock_gettime(CLOCK_MONOTONIC, &current);
+#endif
 	if (ret < 0)
 		return 0;
 
@@ -7702,7 +7758,11 @@ VkResult radv_GetCalibratedTimestampsEXT(
 	uint64_t begin, end;
         uint64_t max_clock_period = 0;
 
+#ifdef CLOCK_MONOTONIC_RAW
 	begin = radv_clock_gettime(CLOCK_MONOTONIC_RAW);
+#else
+	begin = radv_clock_gettime(CLOCK_MONOTONIC);
+#endif
 
 	for (d = 0; d < timestampCount; d++) {
 		switch (pTimestampInfos[d].timeDomain) {
@@ -7717,16 +7777,22 @@ VkResult radv_GetCalibratedTimestampsEXT(
                         max_clock_period = MAX2(max_clock_period, 1);
 			break;
 
+#ifdef CLOCK_MONOTONIC_RAW
 		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
 			pTimestamps[d] = begin;
 			break;
+#endif
 		default:
 			pTimestamps[d] = 0;
 			break;
 		}
 	}
 
+#ifdef CLOCK_MONOTONIC_RAW
 	end = radv_clock_gettime(CLOCK_MONOTONIC_RAW);
+#else
+	end = radv_clock_gettime(CLOCK_MONOTONIC);
+#endif
 
         /*
          * The maximum deviation is the sum of the interval over which we

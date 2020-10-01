@@ -391,10 +391,17 @@ void byte_align_scalar(isel_context *ctx, Temp vec, Operand offset, Temp dst)
          emit_split_vector(ctx, dst, 2);
       else
          emit_extract_vector(ctx, tmp, 0, dst);
-   } else if (vec.size() == 4) {
-      Temp lo = bld.tmp(s2), hi = bld.tmp(s2);
-      bld.pseudo(aco_opcode::p_split_vector, Definition(lo), Definition(hi), vec);
-      hi = bld.pseudo(aco_opcode::p_extract_vector, bld.def(s1), hi, Operand(0u));
+   } else if (vec.size() == 3 || vec.size() == 4) {
+      Temp lo = bld.tmp(s2), hi;
+      if (vec.size() == 3) {
+         /* this can happen if we use VMEM for a uniform load */
+         hi = bld.tmp(s1);
+         bld.pseudo(aco_opcode::p_split_vector, Definition(lo), Definition(hi), vec);
+      } else {
+         hi = bld.tmp(s2);
+         bld.pseudo(aco_opcode::p_split_vector, Definition(lo), Definition(hi), vec);
+         hi = bld.pseudo(aco_opcode::p_extract_vector, bld.def(s1), hi, Operand(0u));
+      }
       if (select != Temp())
          hi = bld.sop2(aco_opcode::s_cselect_b32, bld.def(s1), hi, Operand(0u), select);
       lo = bld.sop2(aco_opcode::s_lshr_b64, bld.def(s2), bld.def(s1, scc), lo, shift);
@@ -2721,12 +2728,18 @@ void visit_alu_instr(isel_context *ctx, nir_alu_instr *instr)
          Temp src0 = bld.tmp(v1);
          Temp src1 = bld.tmp(v1);
          bld.pseudo(aco_opcode::p_split_vector, Definition(src0), Definition(src1), src);
-         if (!ctx->block->fp_mode.care_about_round32 || ctx->block->fp_mode.round32 == fp_round_tz)
+         if (0 && (!ctx->block->fp_mode.care_about_round32 || ctx->block->fp_mode.round32 == fp_round_tz)) {
             bld.vop3(aco_opcode::v_cvt_pkrtz_f16_f32, Definition(dst), src0, src1);
-         else
-            bld.vop3(aco_opcode::v_cvt_pk_u16_u32, Definition(dst),
-                     bld.vop1(aco_opcode::v_cvt_f32_f16, bld.def(v1), src0),
-                     bld.vop1(aco_opcode::v_cvt_f32_f16, bld.def(v1), src1));
+         } else {
+            src0 = bld.vop1(aco_opcode::v_cvt_f16_f32, bld.def(v1), src0);
+            src1 = bld.vop1(aco_opcode::v_cvt_f16_f32, bld.def(v1), src1);
+            if (ctx->program->chip_class >= GFX10) {
+               /* the high bits of v_cvt_f16_f32 isn't zero'd on GFX10 */
+               bld.vop3(aco_opcode::v_pack_b32_f16, Definition(dst), src0, src1);
+            } else {
+               bld.vop3(aco_opcode::v_cvt_pk_u16_u32, Definition(dst), src0, src1);
+            }
+         }
       } else {
          fprintf(stderr, "Unimplemented NIR instr bit size: ");
          nir_print_instr(&instr->instr, stderr);
@@ -7008,6 +7021,7 @@ Temp emit_boolean_reduce(isel_context *ctx, nir_op op, unsigned cluster_size, Te
 Temp emit_boolean_exclusive_scan(isel_context *ctx, nir_op op, Temp src)
 {
    Builder bld(ctx->program, ctx->block);
+   assert(src.regClass() == bld.lm);
 
    //subgroupExclusiveAnd(val) -> mbcnt(exec & ~val) == 0
    //subgroupExclusiveOr(val) -> mbcnt(val & exec) != 0
@@ -7016,7 +7030,7 @@ Temp emit_boolean_exclusive_scan(isel_context *ctx, nir_op op, Temp src)
    if (op == nir_op_iand)
       tmp = bld.sop2(Builder::s_andn2, bld.def(bld.lm), bld.def(s1, scc), Operand(exec, bld.lm), src);
    else
-      tmp = bld.sop2(Builder::s_and, bld.def(s2), bld.def(s1, scc), src, Operand(exec, bld.lm));
+      tmp = bld.sop2(Builder::s_and, bld.def(bld.lm), bld.def(s1, scc), src, Operand(exec, bld.lm));
 
    Builder::Result lohi = bld.pseudo(aco_opcode::p_split_vector, bld.def(s1), bld.def(s1), tmp);
    Temp lo = lohi.def(0).getTemp();
