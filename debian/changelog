@@ -1,3 +1,10 @@
+mesa (20.1.8-1pureos+librem5.1) UNRELEASED; urgency=medium
+
+  * Sync with Debian changes
+  * Backport etnaviv linear stride patch from 20.1.9
+
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Thu, 01 Oct 2020 02:49:19 +0200
+
 mesa (20.1.8-1) unstable; urgency=medium
 
   * New upstream release.
