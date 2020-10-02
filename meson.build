@@ -898,6 +898,8 @@ elif host_machine.system() == 'windows'
   else
     pre_args += ['-D__MSVCRT_VERSION__=0x0700']
   endif
+elif host_machine.system() == 'openbsd'
+  pre_args += '-D_ISOC11_SOURCE'
 endif
 
 # Check for generic C arguments
@@ -1157,7 +1159,7 @@ if not ['linux'].contains(host_machine.system())
   endif
 endif
 
-foreach h : ['xlocale.h', 'linux/futex.h', 'endian.h', 'dlfcn.h', 'execinfo.h', 'sys/shm.h', 'cet.h']
+foreach h : ['xlocale.h', 'linux/futex.h', 'endian.h', 'dlfcn.h', 'execinfo.h', 'sys/shm.h', 'cet.h', 'pthread_np.h']
   if cc.compiles('#include <@0@>'.format(h), name : '@0@'.format(h))
     pre_args += '-DHAVE_@0@'.format(h.to_upper().underscorify())
   endif
@@ -1288,12 +1290,6 @@ if dep_thread.found() and host_machine.system() != 'windows'
       prefix : '#include <pthread.h>',
       args : '-D_GNU_SOURCE')
     pre_args += '-DHAVE_PTHREAD_SETAFFINITY'
-  endif
-  if cc.has_function(
-      'pthread_setaffinity_np',
-      dependencies : dep_thread,
-      prefix : '#include <pthread_np.h>')
-    pre_args += '-DPTHREAD_SETAFFINITY_IN_NP_HEADER'
   endif
 endif
 if host_machine.system() != 'windows'
@@ -1719,6 +1715,12 @@ if dep_m.found()
 endif
 if dep_dl.found()
   gl_priv_libs += '-ldl'
+endif
+
+# FIXME: autotools lists this as incomplete
+gbm_priv_libs = []
+if dep_dl.found()
+  gbm_priv_libs += '-ldl'
 endif
 
 pkg = import('pkgconfig')

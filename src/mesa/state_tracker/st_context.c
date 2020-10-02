@@ -29,6 +29,7 @@
 #include "main/accum.h"
 #include "main/api_exec.h"
 #include "main/context.h"
+#include "main/debug_output.h"
 #include "main/glthread.h"
 #include "main/samplerobj.h"
 #include "main/shaderobj.h"
@@ -765,6 +766,10 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
     */
    ctx->Point.MaxSize = MAX2(ctx->Const.MaxPointSize,
                              ctx->Const.MaxPointSizeAA);
+
+   ctx->Const.NoClippingOnCopyTex = screen->get_param(screen,
+                                                      PIPE_CAP_NO_CLIP_ON_COPY_TEX);
+
    /* For vertex shaders, make sure not to emit saturate when SM 3.0
     * is not supported
     */
@@ -1104,12 +1109,18 @@ st_destroy_context(struct st_context *st)
 
    st_destroy_program_variants(st);
 
-   _mesa_free_context_data(ctx);
+   /* Do not release debug_output yet because it might be in use by other threads.
+    * These threads will be terminated by _mesa_free_context_data and
+    * st_destroy_context_priv.
+    */
+   _mesa_free_context_data(ctx, false);
 
    /* This will free the st_context too, so 'st' must not be accessed
     * afterwards. */
    st_destroy_context_priv(st, true);
    st = NULL;
+
+   _mesa_destroy_debug_output(ctx);
 
    free(ctx);
 

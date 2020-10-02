@@ -6,3 +6,4 @@ etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
 0001-etnaviv-Enable-NIR-compiler-by-default.patch
 0001-Revert-etnaviv-add-anisotropic-filter-support.patch
 94788a3a29dfed1e5d4fd5cfb91a9b67b0b013cc.patch
+etnaviv-simplify-linear-stride-implementation.patch
