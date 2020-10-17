@@ -1,0 +1,28 @@
+From 23bd21041a3dd51c8d6ded0cac0c8adc186ae397 Mon Sep 17 00:00:00 2001
+From: Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>
+Date: Sun, 18 Oct 2020 00:31:03 +0200
+Subject: [PATCH] etnaviv: Disable early-z unconditionally
+
+It's broken on GC7000L and leads to incorrect rendering results.
+---
+ src/gallium/drivers/etnaviv/etnaviv_screen.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_screen.c b/src/gallium/drivers/etnaviv/etnaviv_screen.c
+index 6b356688430..f032850f1a5 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_screen.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_screen.c
+@@ -1006,8 +1006,8 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
+    };
+ 
+    /* apply debug options that disable individual features */
+-   if (DBG_ENABLED(ETNA_DBG_NO_EARLY_Z))
+-      screen->features[viv_chipFeatures] |= chipFeatures_NO_EARLY_Z;
++   //if (DBG_ENABLED(ETNA_DBG_NO_EARLY_Z))
++   screen->features[viv_chipFeatures] |= chipFeatures_NO_EARLY_Z;
+    if (DBG_ENABLED(ETNA_DBG_NO_TS))
+          screen->features[viv_chipFeatures] &= ~chipFeatures_FAST_CLEAR;
+    if (DBG_ENABLED(ETNA_DBG_NO_AUTODISABLE))
+-- 
+2.28.0
+
