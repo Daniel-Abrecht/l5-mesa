@@ -2,9 +2,10 @@
 fix-python-shebang.diff
 path_max.diff
 src_glx_dri_common.h.diff
-etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
-0001-etnaviv-Enable-NIR-compiler-by-default.patch
-0001-Revert-etnaviv-add-anisotropic-filter-support.patch
-94788a3a29dfed1e5d4fd5cfb91a9b67b0b013cc.patch
-etnaviv-Make-sure-to-track-different-pipe_screens-for-dif.patch
-0001-etnaviv-Disable-early-z-unconditionally.patch
+
+purism/etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
+purism/etnaviv-Enable-NIR-compiler-by-default.patch
+purism/Revert-etnaviv-add-anisotropic-filter-support.patch
+purism/kmsro-Extend-to-include-imx-dcss.patch
+purism/etnaviv-Make-sure-to-track-different-pipe_screens-for-dif.patch
+purism/etnaviv-Disable-early-z-unconditionally.patch
