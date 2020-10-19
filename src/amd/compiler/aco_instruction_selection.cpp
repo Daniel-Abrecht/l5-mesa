@@ -9753,13 +9753,21 @@ static void create_vs_exports(isel_context *ctx)
 
    if (outinfo->export_prim_id && !(ctx->stage & hw_ngg_gs)) {
       ctx->outputs.mask[VARYING_SLOT_PRIMITIVE_ID] |= 0x1;
-      ctx->outputs.temps[VARYING_SLOT_PRIMITIVE_ID * 4u] = get_arg(ctx, ctx->args->vs_prim_id);
+      if (ctx->stage & sw_tes)
+         ctx->outputs.temps[VARYING_SLOT_PRIMITIVE_ID * 4u] = get_arg(ctx, ctx->args->ac.tes_patch_id);
+      else
+         ctx->outputs.temps[VARYING_SLOT_PRIMITIVE_ID * 4u] = get_arg(ctx, ctx->args->vs_prim_id);
    }
 
    if (ctx->options->key.has_multiview_view_index) {
       ctx->outputs.mask[VARYING_SLOT_LAYER] |= 0x1;
       ctx->outputs.temps[VARYING_SLOT_LAYER * 4u] = as_vgpr(ctx, get_arg(ctx, ctx->args->ac.view_index));
    }
+
+   /* Hardware requires position data to always be exported, even if the
+    * application did not write gl_Position.
+    */
+   ctx->outputs.mask[VARYING_SLOT_POS] = 0xf;
 
    /* the order these position exports are created is important */
    int next_pos = 0;
