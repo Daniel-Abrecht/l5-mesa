@@ -1,8 +1,11 @@
-mesa (20.1.10-1pureos+librem5.1) UNRELEASED; urgency=medium
+mesa (20.1.10-1pureos+librem5.1) amber-phone; urgency=medium
 
   * New upstream release
+  * Drop patch already upstream
+  * etnaviv: Disable early-z unconditionally
+  * debian/patches: Clean up
 
- -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Sun, 18 Oct 2020 00:13:14 +0200
+ -- Sebastian Krzyszkowiak <sebastian.krzyszkowiak@puri.sm>  Mon, 19 Oct 2020 21:11:06 +0200
 
 mesa (20.1.8-1pureos+librem5.1) amber-phone; urgency=medium
 
