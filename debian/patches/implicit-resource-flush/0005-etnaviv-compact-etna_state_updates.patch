@@ -1,0 +1,45 @@
+From da23ba72412589d06b2fb367e1e2a91602536540 Mon Sep 17 00:00:00 2001
+From: Lucas Stach <l.stach@pengutronix.de>
+Date: Tue, 17 Nov 2020 12:08:13 +0100
+Subject: [PATCH 5/6] etnaviv: compact etna_state_updates
+
+Just reclaim a bit of screen real estate, purely cosmetic change.
+
+Signed-off-by: Lucas Stach <l.stach@pengutronix.de>
+---
+ src/gallium/drivers/etnaviv/etnaviv_state.c | 15 +++++----------
+ 1 file changed, 5 insertions(+), 10 deletions(-)
+
+diff --git a/src/gallium/drivers/etnaviv/etnaviv_state.c b/src/gallium/drivers/etnaviv/etnaviv_state.c
+index 5559cc54f0b..ce298e86a4d 100644
+--- a/src/gallium/drivers/etnaviv/etnaviv_state.c
++++ b/src/gallium/drivers/etnaviv/etnaviv_state.c
+@@ -685,20 +685,15 @@ struct etna_state_updater {
+ static const struct etna_state_updater etna_state_updates[] = {
+    {
+       etna_shader_update_vertex, ETNA_DIRTY_SHADER | ETNA_DIRTY_VERTEX_ELEMENTS,
+-   },
+-   {
++   }, {
+       etna_shader_link, ETNA_DIRTY_SHADER,
+-   },
+-   {
++   }, {
+       etna_update_blend, ETNA_DIRTY_BLEND | ETNA_DIRTY_FRAMEBUFFER
+-   },
+-   {
++   }, {
+       etna_update_blend_color, ETNA_DIRTY_BLEND_COLOR | ETNA_DIRTY_FRAMEBUFFER,
+-   },
+-   {
++   }, {
+       etna_update_ts_config, ETNA_DIRTY_DERIVE_TS,
+-   },
+-   {
++   }, {
+       etna_update_clipping, ETNA_DIRTY_SCISSOR | ETNA_DIRTY_FRAMEBUFFER |
+                             ETNA_DIRTY_RASTERIZER | ETNA_DIRTY_VIEWPORT,
+    }
+-- 
+2.20.1
+

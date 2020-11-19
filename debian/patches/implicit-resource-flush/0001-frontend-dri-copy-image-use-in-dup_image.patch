@@ -1,0 +1,27 @@
+From a2823ab81a9444d0b88e7066443d7064f4d81a10 Mon Sep 17 00:00:00 2001
+From: Lucas Stach <l.stach@pengutronix.de>
+Date: Fri, 13 Nov 2020 14:26:23 +0100
+Subject: [PATCH 1/6] frontend/dri: copy image use in dup_image
+
+Don't lose the use flags when dup'ing an image.
+
+Signed-off-by: Lucas Stach <l.stach@pengutronix.de>
+---
+ src/gallium/state_trackers/dri/dri2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/gallium/state_trackers/dri/dri2.c b/src/gallium/state_trackers/dri/dri2.c
+index d2032dc1e12..c11fec42e2c 100644
+--- a/src/gallium/state_trackers/dri/dri2.c
++++ b/src/gallium/state_trackers/dri/dri2.c
+@@ -1249,6 +1249,7 @@ dri2_dup_image(__DRIimage *image, void *loaderPrivate)
+    img->dri_format = image->dri_format;
+    /* This should be 0 for sub images, but dup is also used for base images. */
+    img->dri_components = image->dri_components;
++   img->use = image->use;
+    img->loader_private = loaderPrivate;
+ 
+    return img;
+-- 
+2.20.1
+

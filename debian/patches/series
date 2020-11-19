@@ -3,6 +3,13 @@ fix-python-shebang.diff
 path_max.diff
 src_glx_dri_common.h.diff
 
+implicit-resource-flush/0001-frontend-dri-copy-image-use-in-dup_image.patch
+implicit-resource-flush/0002-dri-bring-back-use-flags-for-createImageWithModifier.patch
+implicit-resource-flush/0003-frontend-dri-add-EXPLICIT_FLUSH-hint-in-dri2_resourc.patch
+implicit-resource-flush/0004-etnaviv-remove-double-assigment-of-surface-texture.patch
+implicit-resource-flush/0005-etnaviv-compact-etna_state_updates.patch
+implicit-resource-flush/0006-etnaviv-flush-used-render-buffers-on-context-flush-w.patch
+
 purism/etnaviv-Fix-disabling-early-z-rejection-on-GC700L-HALTI5.patch
 purism/etnaviv-Enable-NIR-compiler-by-default.patch
 purism/Revert-etnaviv-add-anisotropic-filter-support.patch
