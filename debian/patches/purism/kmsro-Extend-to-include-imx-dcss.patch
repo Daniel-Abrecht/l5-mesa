@@ -21,11 +21,12 @@ diff --git a/src/gallium/drivers/kmsro/Android.mk b/src/gallium/drivers/kmsro/An
 index 7c39f97b81b..56edab20f13 100644
 --- a/src/gallium/drivers/kmsro/Android.mk
 +++ b/src/gallium/drivers/kmsro/Android.mk
-@@ -40,6 +40,7 @@ GALLIUM_TARGET_DRIVERS += hx8357d
+@@ -40,6 +40,8 @@ GALLIUM_TARGET_DRIVERS += hx8357d
  GALLIUM_TARGET_DRIVERS += ili9225
  GALLIUM_TARGET_DRIVERS += ili9341
  GALLIUM_TARGET_DRIVERS += imx
 +GALLIUM_TARGET_DRIVERS += imx-dcss
++GALLIUM_TARGET_DRIVERS += udl
  GALLIUM_TARGET_DRIVERS += ingenic-drm
  GALLIUM_TARGET_DRIVERS += stm
  GALLIUM_TARGET_DRIVERS += mcde
@@ -33,11 +34,12 @@ diff --git a/src/gallium/targets/dri/meson.build b/src/gallium/targets/dri/meson
 index 954b2182ce4..7ebcec16cf3 100644
 --- a/src/gallium/targets/dri/meson.build
 +++ b/src/gallium/targets/dri/meson.build
-@@ -73,6 +73,7 @@ foreach d : [[with_gallium_kmsro, [
+@@ -73,6 +73,8 @@ foreach d : [[with_gallium_kmsro, [
                 'ili9225_dri.so',
                 'ili9341_dri.so',
                 'imx-drm_dri.so',
 +               'imx-dcss_dri.so',
++               'udl_dri.so',
                 'ingenic-drm_dri.so',
                 'mcde_dri.so',
                 'meson_dri.so',
@@ -45,11 +47,12 @@ diff --git a/src/gallium/targets/dri/target.c b/src/gallium/targets/dri/target.c
 index f71f690a70e..7e49378e4bc 100644
 --- a/src/gallium/targets/dri/target.c
 +++ b/src/gallium/targets/dri/target.c
-@@ -98,6 +98,7 @@ DEFINE_LOADER_DRM_ENTRYPOINT(hx8357d)
+@@ -98,6 +98,8 @@ DEFINE_LOADER_DRM_ENTRYPOINT(hx8357d)
  DEFINE_LOADER_DRM_ENTRYPOINT(ili9225)
  DEFINE_LOADER_DRM_ENTRYPOINT(ili9341)
  DEFINE_LOADER_DRM_ENTRYPOINT(imx_drm)
 +DEFINE_LOADER_DRM_ENTRYPOINT(imx_dcss)
++DEFINE_LOADER_DRM_ENTRYPOINT(udl)
  DEFINE_LOADER_DRM_ENTRYPOINT(ingenic_drm)
  DEFINE_LOADER_DRM_ENTRYPOINT(mcde)
  DEFINE_LOADER_DRM_ENTRYPOINT(meson)
